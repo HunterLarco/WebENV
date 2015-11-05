@@ -1,0 +1,39 @@
+<html>
+<head>
+  
+<script src='system/boot/bootloader.js'></script>
+<script src='system/boot/WLibrary.js'></script>
+<script src='system/boot/WLibraryManager.js'></script>
+
+<script src='system/packages.js'></script>
+  
+</head>
+<body>
+  
+  WebENV
+
+
+<script>
+(function(){
+  
+  window.onload = function(){
+    BOOTLOADER.launch(PACKAGES)
+  }
+  
+  window.didBootLaunch = function(){
+    console.log('Boot Launched');
+    console.log(BOOTLOADER.getLibraryManager().getIdentifierList())
+    
+    console.log(new WPath('/users/temp/test.txt').getPathAsString())
+    console.log(new WPath('/users/temp/archive.rar').getPathAsString())
+    console.log(new WPath('/users').getPathAsString())
+    console.log(new WPath('/').concat('./homework.txt').getPathAsString())
+    console.log(new WPath('/').concat('./users').getPathAsString())
+    console.log(new WPath('/users').concat('..').getPathAsString())
+    console.log(new WPath('/users').concat('../..').getPathAsString())
+  }
+  
+})();
+</script>
+<body>
+</html>
