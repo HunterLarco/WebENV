@@ -5,13 +5,14 @@
     var undefined;
     
     
-    var path;
+    var decomposedPath;
     var pathString;
     
     
     self.concat = Concat;
     
     self.getPathAsString = GetPathAsString;
+    self.getDecomposedPath = GetDecomposedPath;
     
     
     function Concat(relativePath){
@@ -21,10 +22,21 @@
     function GetPathAsString(){
       return pathString;
     }
+    function GetDecomposedPath(){
+      return decomposedPath;
+    }
+    
+    
+    function DecomposePath(path){
+      if (path[0] != '/') path = '/' + path;
+      path = path.replace(/\/+/g, '/');
+      return path.split('/').slice(1);
+    }
     
     
     (function Constructor(_pathString){
-      pathString = _pathString;
+      decomposedPath = DecomposePath(_pathString);
+      pathString = '/' + decomposedPath.join('/');
     }).apply(self, arguments);
   }
   

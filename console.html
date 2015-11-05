@@ -2,6 +2,7 @@
 <head>
   
 <script src='system/boot/bootloader.js'></script>
+<script src='system/boot/WLogger.js'></script>
 <script src='system/boot/WLibrary.js'></script>
 <script src='system/boot/WLibraryManager.js'></script>
 
@@ -21,16 +22,50 @@
   }
   
   window.didBootLaunch = function(){
-    console.log('Boot Launched');
-    console.log(BOOTLOADER.getLibraryManager().getIdentifierList())
+    WLocalDrive.loadFromLocalStorage();
     
-    console.log(new WPath('/users/temp/test.txt').getPathAsString())
-    console.log(new WPath('/users/temp/archive.rar').getPathAsString())
-    console.log(new WPath('/users').getPathAsString())
-    console.log(new WPath('/').concat('./homework.txt').getPathAsString())
-    console.log(new WPath('/').concat('./users').getPathAsString())
-    console.log(new WPath('/users').concat('..').getPathAsString())
-    console.log(new WPath('/users').concat('../..').getPathAsString())
+    var file = WLocalDrive.locatePath(new WPath('/test/asd/test.lol'));
+    console.log(file.getFileBlob().getContent())
+    
+    return
+    
+    var libraryList = BOOTLOADER.getLibraryManager().getIdentifierList();
+    WLogger.inform('ENV Launched with Libraries:', libraryList.join(', '));
+    
+    
+    // Inspect(new WPath('/users/temp/test.txt'))
+    // Inspect(new WPath('/users/temp/../..'))
+    // Inspect(new WPath('users/temp/archive.rar'))
+    // Inspect(new WPath('/users'))
+    // Inspect(new WPath('/').concat('./homework.txt'))
+    // Inspect(new WPath('/').concat('./users'))
+    // Inspect(new WPath('/users').concat('..'))
+    // Inspect(new WPath('/users').concat('../..'))
+    
+    WLocalDrive.makeDirectory(new WPath('/test'));
+    WLocalDrive.makeDirectory(new WPath('/test/asd'));
+    
+    // WLocalDrive.makeDirectory(new WPath('/test'));
+    // WLocalDrive.makeDirectory(new WPath('/test/lol.txt'));
+    
+    // WLocalDrive.makeDirectory(new WPath('/tests/asd'));
+    
+    WLocalDrive.writeFile(
+      new WFile({
+        'path': new WPath('/test/asd'),
+        'blob': new WFileBlob({ name:'test.lol', content:'is this working?' })
+      })
+    );
+    
+    WLocalDrive.saveToLocalStorage();
+  }
+  
+  function Inspect(wpath){
+    console.log(wpath.getPathAsString());
+    console.log(WLocalDrive.exists(wpath))
+    console.log(WLocalDrive.isDirectory(wpath))
+    console.log(WLocalDrive.isFile(wpath))
+    console.log(WLocalDrive.locatePath(wpath));
   }
   
 })();

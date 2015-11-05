@@ -5,6 +5,9 @@
     var undefined;
     
     
+    var verbose = true;
+    
+    
     const SYSTEMSTRING = 'WebENV:system$';
     const SYSTEMCOLOR = 'rgb(160,160,160)';
     
@@ -12,6 +15,8 @@
     self.inform = LogInform;
     self.warn = LogWarn;
     self.error = LogError;
+    
+    self.try = Try;
     
     
     function LogInform(){
@@ -42,8 +47,17 @@
       });
     }
     
+    function Try(func){
+      verbose = false;
+      result = func();
+      verbose = true;
+      return result;
+    }
+    
     
     function LogMessage(handle, message, extras, colors){
+      if(!verbose) return;
+      
       if(message === undefined) message = '';
       if(extras === undefined) extras = '';
       if(extras instanceof Array) extras = extras.join(' ');
