@@ -29,11 +29,17 @@
     
     
     function Load(){
-      if(isLoaded) throw "Unable to load '"+identifier+"' Library twice.";
+      WLogger.inform('Downloading WLibrary: ', identifier);
+      
+      if(isLoaded){
+        WLogger.warn('Unable to load WLibrary twice: ', identifier);
+        throw "Unable to load '"+identifier+"' Library twice.";
+      }
       isLoading = true;
       
       var elem = document.createElement('script');
       elem.addEventListener('load', ScriptLoaded);
+      elem.addEventListener('error', ScriptLoadError);
       elem.setAttribute('src', script);
 
       document.head.appendChild(elem);
@@ -41,6 +47,9 @@
     function ScriptLoaded(){
       isLoading = false;
       isLoaded = true;
+    }
+    function ScriptLoadError(){
+      WLogger.error('Failure to load library: ', identifier);
     }
     
     function IsLoading(){

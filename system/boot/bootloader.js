@@ -24,13 +24,16 @@
       var identifier = lib.identifier;
       var worker = lib.worker;
       
-      if(!libmanager.hasPendingByIdentifier(identifier))
-        console.warn("Unknown library registered: '"+identifier+"'");
+      if(!libmanager.hasPendingByIdentifier(identifier)){
+        WLogger.warn('Unknown library registered:', identifier);
+        return;
+      }
       
       var library = libmanager.getPendingByIdentifier(identifier);
       library.setWorker(worker);
       
       libmanager.register(library);
+      WLogger.inform('BOOTLOADER registered WLibrary:', identifier);
       
       if (!libmanager.hasPending())
         DidFinishLaunch();
@@ -53,7 +56,7 @@
     }
     function DidFinishLaunch(){
       if(window.didBootLaunch !== undefined)
-        window.didBootLaunch();
+        setTimeout(window.didBootLaunch, 0);
     }
     
   })();
