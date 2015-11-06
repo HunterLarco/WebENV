@@ -54,7 +54,8 @@
       var library = new WLibrary({
         'identifier': lib.identifier,
         'description': lib.description,
-        'script': lib.script
+        'script': lib.script,
+        'requirements': lib.requires
       });
       
       libmanager.notify(library);

@@ -6,6 +6,7 @@
     
     
     var verbose = true;
+    var groupHeight = 0;
     
     
     const SYSTEMSTRING = 'WebENV:system$';
@@ -15,6 +16,9 @@
     self.inform = LogInform;
     self.warn = LogWarn;
     self.error = LogError;
+    
+    self.group = MakeGroup;
+    self.closeGroup = CloseGroup;
     
     self.try = Try;
     
@@ -54,6 +58,13 @@
       return result;
     }
     
+    function MakeGroup(){
+      groupHeight++;
+    }
+    function CloseGroup(){
+      groupHeight = Math.max(0, groupHeight-1);
+    }
+    
     
     function LogMessage(handle, message, extras, colors){
       if(!verbose) return;
@@ -67,12 +78,20 @@
       var extrascolor = colors.extras || 'rgb(0,0,0)';
       
       console.log(
-        '%c' + handle + ' %c' + SYSTEMSTRING + ' %c' + message + ' %c' + extras,
+        GetGroupTabs() + '%c' + handle + ' %c' + SYSTEMSTRING + ' %c' + message + ' %c' + extras,
         'color:' + handlecolor,
         'color:' + SYSTEMCOLOR,
         'color:' + messagecolor,
         'color:' + extrascolor
       );
+    }
+    function GetGroupTabs(){
+      var tabs = '';
+      
+      for(var i=0; i<groupHeight; i++)
+        tabs += '\t';
+      
+      return tabs;
     }
     
   })();

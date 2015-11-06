@@ -1,7 +1,5 @@
 PACKAGES = [
   
-  // TODO load in order
-  
   {
     'identifier': 'WFileBlob',
     'script': 'system/WFileBlob.js',
@@ -36,6 +34,13 @@ PACKAGES = [
     'identifier': 'WScripting',
     'script': 'system/WScripting.js',
     'description': 'Lexigraphic interpreter for unix commands'
+  },
+  
+  {
+    'identifier': 'WShell',
+    'script': 'system/WShell.js',
+    'description': 'A shell interface for WScripting',
+    'requires': ['system/WShell.css']
   }
   
 ]

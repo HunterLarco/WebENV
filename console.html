@@ -82,10 +82,11 @@
     function ListDir(obj){
       var dir = WLocalDrive.locatePath(new WPath(obj.dirname));
       var children = dir.getChildren();
-      return children.map(function(value){
-        if (value instanceof WDirectory) return value.getDirectoryName();
-        else return value.getFileBlob().getFileName();
-      });
+      
+      for(var i=0,child; child=children[i++];){
+        if (child instanceof WDirectory) WLogger.inform(child.getDirectoryName());
+        else return WLogger.inform(child.getFileBlob().getFileName());
+      }
     }
     
     
