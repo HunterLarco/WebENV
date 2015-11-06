@@ -58,8 +58,9 @@
         parameters[kwarg] = null;
       
       for(var i=1,part; part=partsList[i++];){
-        if(part.slice(0,2) === '--'){
-          part = part.slice(2);
+        if(part[0] === '-'){
+          if(part.slice(0,2) === '--') part = part.slice(2);
+          else part = part.slice(1);
           
           if(kwargs.indexOf(part) !== -1){
             if(parameters[part] !== null){
@@ -67,7 +68,7 @@
               throw 'Dupicate keyword arguments cannot be resolved';
             }
             
-            if(i >= partsList.length || partsList[i].slice(0,2) === '--'){
+            if(i >= partsList.length || partsList[i][0] === '-'){
               WLogger.warn('Keyword argument must preceed value pair:', part);
               throw 'Keyword argument must preceed value pair';
             }

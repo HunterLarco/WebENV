@@ -33,9 +33,11 @@
         'command': 'mkdir',
         'args': 'dirname',
         'kwargs': '',
-        'flags': 'fillin',
+        'flags': 'p v',
         'worker': DoMakeDir
       },
+      // p ~ fills in directories
+      // v ~ is verbose in filling in directories
       
       {
         'command': 'ls',
@@ -48,13 +50,33 @@
     ]);
     
     
-    // WLocalDrive.loadFromLocalStorage();
-
 
     function DoMakeDir(obj){
-      if(obj.fillin) WLocalDrive.makeDirectoryWithFillin(new WPath(obj.dirname));
-      else WLocalDrive.makeDirectory(new WPath(obj.dirname));      
-      // WLocalDrive.saveToLocalStorage();
+      var path = new WPath(obj.dirname);
+      
+      if(obj.p){
+        MakeDirectoryWithFillin(path, obj.v);
+      }else{
+        WLocalDrive.makeDirectory(path);
+        if(obj.v) WLogger.inform('Directory created:', path.getPathAsString());
+      }
+    }
+    function MakeDirectoryWithFillin(wpath, isverbose){
+      var lastDir;
+      
+      var subpaths = wpath.getSubPaths();
+      for(var i=0,path; path=subpaths[i++];){
+        if(WLocalDrive.exists(path)){
+          if(isverbose) WLogger.inform('Directory exists:', path.getPathAsString());
+        }else{
+          lastDir = WLocalDrive.makeDirectory(path);
+          if(isverbose) WLogger.inform('Directory created:', path.getPathAsString());
+        }
+      }
+
+      if(lastDir == undefined)
+        return WLocalDrive.locatePath(wpath);
+      return lastDir;
     }
     
     function ListDir(obj){

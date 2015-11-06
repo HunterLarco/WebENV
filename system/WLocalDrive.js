@@ -9,9 +9,7 @@
     
     
     self.writeFile = WriteFile;
-    
     self.makeDirectory = MakeDirectory;
-    self.makeDirectoryWithFillin = MakeDirectoryWithFillin;
     
     self.exists = Exists;
     self.isDirectory = IsDirectory;
@@ -36,7 +34,6 @@
       
       return wfile;
     }
-    
     function MakeDirectory(wpath){
       var newDirName = wpath.getLastToken();
       
@@ -57,18 +54,6 @@
       enclosingDir.setChild(newDirName, newDir);
       
       return newDir;
-    }
-    function MakeDirectoryWithFillin(wpath){
-      var lastDir;
-      
-      var subpaths = wpath.getSubPaths();
-      for(var i=0,path; path=subpaths[i++];){
-        if(!Exists(path))
-          lastDir = MakeDirectory(path);
-      }
-
-      if(lastDir == undefined) lastDir = LocatePath(wpath);
-      return lastDir;
     }
     
     function Exists(wpath){
