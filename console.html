@@ -1,36 +1,225 @@
 <html>
 <head>
+<style>
+
+.shellwindow{
+  position:fixed;
   
-<script src='system/boot/bootloader.js'></script>
+  top:0px;
+  left:0px;
+  right:0px;
+  bottom:0px;
+}
+
+</style>
+  
+<script src='system/boot/WLogger.js'></script>
 <script src='system/boot/WLibrary.js'></script>
 <script src='system/boot/WLibraryManager.js'></script>
+<script src='system/boot/bootloader.js'></script>
 
 <script src='system/packages.js'></script>
-  
+
 </head>
 <body>
-  
-  WebENV
 
+<div class='shellwindow'></div>
 
 <script>
 (function(){
   
+  var wshell;
+  
   window.onload = function(){
-    BOOTLOADER.launch(PACKAGES)
+    BOOTLOADER.setPackages(PACKAGES);
+    BOOTLOADER.preload('WShell', OnShellLoad);
+  }
+  function OnShellLoad(){
+    wshell = new WShell(document.querySelector('.shellwindow'));
+    BOOTLOADER.launch();
   }
   
   window.didBootLaunch = function(){
-    console.log('Boot Launched');
-    console.log(BOOTLOADER.getLibraryManager().getIdentifierList())
+    var libraryList = BOOTLOADER.getLibraryManager().getIdentifierList();
+    WLogger.inform('ENV Launched with Libraries:', libraryList.join(', '));
     
-    console.log(new WPath('/users/temp/test.txt').getPathAsString())
-    console.log(new WPath('/users/temp/archive.rar').getPathAsString())
-    console.log(new WPath('/users').getPathAsString())
-    console.log(new WPath('/').concat('./homework.txt').getPathAsString())
-    console.log(new WPath('/').concat('./users').getPathAsString())
-    console.log(new WPath('/users').concat('..').getPathAsString())
-    console.log(new WPath('/users').concat('../..').getPathAsString())
+    
+    
+    var parser = new WScripting([
+  
+      {
+        'command': 'mkdir',
+        'args': 'dirname',
+        'kwargs': '',
+        'flags': 'p v',
+        'worker': DoMakeDir
+      },
+      // p ~ fills in directories
+      // v ~ is verbose in filling in directories
+      
+      {
+        'command': 'ls',
+        'args': 'dirname[/]',
+        'kwargs': '',
+        'flags': 'print',
+        'worker': ListDir
+      },
+      
+      {
+        'command': 'cd',
+        'args': 'path',
+        'kwargs': '',
+        'flags': '',
+        'worker': CurrentDirectory
+      },
+      
+      {
+        'command': 'info',
+        'args': 'command',
+        'kwargs': '',
+        'flags': '',
+        'worker': CommandInfo
+      }
+  
+    ]);
+    
+    
+    var workingDirectory = new WPath('/');
+
+    function DoMakeDir(obj){
+      var path = workingDirectory.concat(obj.dirname);
+      
+      if(obj.p){
+        MakeDirectoryWithFillin(path, obj.v);
+      }else{
+        WLocalDrive.makeDirectory(path);
+        if(obj.v) WLogger.inform('Directory created:', path.getPathAsString());
+      }
+    }
+    function MakeDirectoryWithFillin(wpath, isverbose){
+      var lastDir;
+      
+      var subpaths = wpath.getSubPaths();
+      for(var i=0,path; path=subpaths[i++];){
+        if(WLocalDrive.exists(path)){
+          if(isverbose) WLogger.inform('Directory exists:', path.getPathAsString());
+        }else{
+          lastDir = WLocalDrive.makeDirectory(path);
+          if(isverbose) WLogger.inform('Directory created:', path.getPathAsString());
+        }
+      }
+
+      if(lastDir == undefined)
+        return WLocalDrive.locatePath(wpath);
+      return lastDir;
+    }
+    
+    function ListDir(obj){
+      var wpath = workingDirectory.concat(obj.dirname);
+      var dir = WLocalDrive.locatePath(wpath);
+      
+      if(obj.print){
+        var output = ListNestedDir(dir);
+        if(output.length === 0)
+          return 'Directory is empty';
+        return output.join('\n');
+      }
+      
+      var output = [];
+      
+      var children = dir.getChildren();
+      
+      for(var i=0,child; child=children[i++];){
+        if (child instanceof WDirectory) output.push(child.getDirectoryName());
+        else return output.push(child.getFileBlob().getFileName());
+      }
+      
+      if(output.length === 0)
+        return 'Directory is empty';
+      return output.join('\n');
+    }
+    function ListNestedDir(dir){
+      var children = dir.getChildren();
+      var output = [];
+      
+      for(var i=0,child; child=children[i++];){
+        output.push(child.getPath().getPathAsString());
+        output = output.concat(ListNestedDir(child));
+      }
+      
+      return output;
+    }
+    
+    function CurrentDirectory(obj){
+      var pathString = obj.path;
+      var newDirectory;
+      
+      if(pathString[0] === '/') newDirectory = new WPath(pathString);
+      else newDirectory = workingDirectory.concat(pathString);
+      
+      WLocalDrive.locatePath(newDirectory);
+      workingDirectory = newDirectory;
+    }
+    
+    function CommandInfo(obj){
+      var command = obj.command;
+      var spec = wshell.getParser().getCommandSpec(command);
+      
+      var args = spec.args;
+      var argdefaults = spec.argdefaults;
+      var kwargs = spec.kwargs;
+      var flags = spec.flags;
+      
+      var response = '';
+      
+      response += 'Required Arguments\n';
+      for(var i=0,arg; arg=args[i++];){
+        response += '\t' + arg;
+        var defaultarg = argdefaults[arg];
+        if(defaultarg !== undefined)
+          response += '\n\t\tdefault_value = "' + defaultarg + '"';
+        response += '\n';
+      }
+      if(args.length === 0)
+        response += '\tNo required arguments\n';
+      response += '\n';
+      
+      response += 'Keyword Arguments (optionals)\n';
+      for(var i=0,kwarg; kwarg=kwargs[i++];){
+        response += '\t' + kwarg;
+        response += '\t\tdefault_value = None';
+        response += '\n';
+      }
+      if(kwargs.length === 0)
+        response += '\tNo keyword arguments\n';
+      response += '\n';
+      
+      response += 'Flags\n';
+      for(var i=0,flag; flag=flags[i++];){
+        response += '\t' + flag;
+        response += '\n';
+      }
+      if(flags.length === 0)
+        response += '\tNo flags\n';
+      
+      return response;
+    }
+    
+    
+    WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
+    
+    
+    wshell.setParser(parser);
+    wshell.start();
+    
+  }
+  
+  function Inspect(wpath){
+    console.log(wpath.getPathAsString());
+    console.log(WLocalDrive.exists(wpath))
+    console.log(WLocalDrive.isDirectory(wpath))
+    console.log(WLocalDrive.isFile(wpath))
+    console.log(WLocalDrive.locatePath(wpath));
   }
   
 })();
