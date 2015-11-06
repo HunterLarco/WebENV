@@ -21,7 +21,13 @@ PACKAGES = [
   {
     'identifier': 'WLocalDrive',
     'script': 'system/WLocalDrive.js',
-    'description': 'The  equivalent of a C drive for WebENV. Uses LocalSession.'
+    'description': 'The equivalent of a C drive for WebENV. Uses LocalSession.'
   },
+  
+  {
+    'identifier': 'WScripting',
+    'script': 'system/WScripting.js',
+    'description': 'Lexigraphic interpreter for unix commands'
+  }
   
 ]

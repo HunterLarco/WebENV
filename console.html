@@ -22,16 +22,59 @@
   }
   
   window.didBootLaunch = function(){
-    WLocalDrive.loadFromLocalStorage();
-    
-    var file = WLocalDrive.locatePath(new WPath('/test/asd/test.lol'));
-    console.log(file.getFileBlob().getContent())
-    
-    return
-    
     var libraryList = BOOTLOADER.getLibraryManager().getIdentifierList();
     WLogger.inform('ENV Launched with Libraries:', libraryList.join(', '));
     
+    
+    
+    var parser = new WScripting([
+  
+      {
+        'command': 'mkdir',
+        'args': 'dirname',
+        'kwargs': 'test',
+        'flags': 'force',
+        'worker': DoMKDIR
+      }
+  
+    ]);
+
+
+    function DoMKDIR(obj){
+      console.log(obj);
+    }
+    
+    
+    WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
+    
+    parser.parse('mkdir test');
+    // parser.parse('mkdir --force --lolol --test lol arg --test lol2');
+    // parser.parse('mkdir --force --test lol arg --test lol2');
+    // parser.parse('mkdir --force arg --test');
+    // parser.parse('mkdir arg --test --force lol');
+    parser.parse('mkdir --force arg --test lol');
+    parser.parse('mkdir --force --test lol arg');
+    parser.parse('mkdir --dirname test');
+    parser.parse('mkdir test --force');
+    parser.parse('mkdir --force test');
+    
+    parser.parse('mkdir --force "this is a test"');
+    parser.parse('mkdir --test "test again" "this is a test"');
+    // parser.parse('mkdir --test "test again" this is a test"');
+    // parser.parse('mkdir "test again\\\\" this is a test"');
+    parser.parse('mkdir "test again\\\" this is a test"');
+    
+    
+    return
+    
+        //
+    // WLocalDrive.loadFromLocalStorage();
+    //
+    // var file = WLocalDrive.locatePath(new WPath('/test/asd/test.lol'));
+    // console.log(file.getFileBlob().getContent())
+    //
+    // return
+    //
     
     // Inspect(new WPath('/users/temp/test.txt'))
     // Inspect(new WPath('/users/temp/../..'))
