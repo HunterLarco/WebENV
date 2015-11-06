@@ -86,12 +86,16 @@
       return result;
     }
     function Listen(eventName, func){
-      listeners[eventName] = func;
+      var listenDict = listeners[eventName];
+      if(listenDict === undefined)
+        listenDict = listeners[eventName] = [];
+      listenDict.push(func);
     }
     function RunEvent(eventName, event){
-      var func = listeners[eventName];
-      if(func === undefined) return;
-      func(event);
+      var funcList = listeners[eventName];
+      if(funcList === undefined) return;
+      for(var i=0,func; func=funcList[i++];)
+        func(event);
     }
     
     
