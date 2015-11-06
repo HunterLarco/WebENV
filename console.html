@@ -32,38 +32,58 @@
       {
         'command': 'mkdir',
         'args': 'dirname',
-        'kwargs': 'test',
-        'flags': 'force',
-        'worker': DoMKDIR
+        'kwargs': '',
+        'flags': 'fillin',
+        'worker': DoMakeDir
+      },
+      
+      {
+        'command': 'getdir',
+        'args': 'dirname',
+        'kwargs': '',
+        'flags': '',
+        'worker': GetDir
       }
   
     ]);
+    
+    
+    // WLocalDrive.loadFromLocalStorage();
 
 
-    function DoMKDIR(obj){
-      console.log(obj);
+    function DoMakeDir(obj){
+      if(obj.fillin) WLocalDrive.makeDirectoryWithFillin(new WPath(obj.dirname));
+      else WLocalDrive.makeDirectory(new WPath(obj.dirname));      
+      // WLocalDrive.saveToLocalStorage();
+    }
+    
+    function GetDir(obj){
+      return WLocalDrive.locatePath(new WPath(obj.dirname));
     }
     
     
+    window.parser = parser;
+    
+    
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
-    
-    parser.parse('mkdir test');
-    // parser.parse('mkdir --force --lolol --test lol arg --test lol2');
-    // parser.parse('mkdir --force --test lol arg --test lol2');
-    // parser.parse('mkdir --force arg --test');
-    // parser.parse('mkdir arg --test --force lol');
-    parser.parse('mkdir --force arg --test lol');
-    parser.parse('mkdir --force --test lol arg');
-    parser.parse('mkdir --dirname test');
-    parser.parse('mkdir test --force');
-    parser.parse('mkdir --force test');
-    
-    parser.parse('mkdir --force "this is a test"');
-    parser.parse('mkdir --test "test again" "this is a test"');
-    // parser.parse('mkdir --test "test again" this is a test"');
-    // parser.parse('mkdir "test again\\\\" this is a test"');
-    parser.parse('mkdir "test again\\\" this is a test"');
-    
+        //
+    // parser.execute('mkdir test');
+    // // parser.execute('mkdir --force --lolol --test lol arg --test lol2');
+    // // parser.execute('mkdir --force --test lol arg --test lol2');
+    // // parser.execute('mkdir --force arg --test');
+    // // parser.execute('mkdir arg --test --force lol');
+    // parser.execute('mkdir --force arg --test lol');
+    // parser.execute('mkdir --force --test lol arg');
+    // parser.execute('mkdir --dirname test');
+    // parser.execute('mkdir test --force');
+    // parser.execute('mkdir --force test');
+    //
+    // parser.execute('mkdir --force "this is a test"');
+    // parser.execute('mkdir --test "test again" "this is a test"');
+    // // parser.execute('mkdir --test "test again" this is a test"');
+    // // parser.execute('mkdir "test again\\\\" this is a test"');
+    // parser.execute('mkdir "test again\\\" this is a test"');
+    //
     
     return
     

@@ -1,5 +1,7 @@
 PACKAGES = [
   
+  // TODO load in order
+  
   {
     'identifier': 'WFileBlob',
     'script': 'system/WFileBlob.js',
@@ -10,6 +12,12 @@ PACKAGES = [
     'identifier': 'WFile',
     'script': 'system/WFile.js',
     'description': 'Reads/writes files for the virtual environment'
+  },
+  
+  {
+    'identifier': 'WDirectory',
+    'script': 'system/WDirectory.js',
+    'description': 'Wraps drive directories to provide inspection methods'
   },
   
   {

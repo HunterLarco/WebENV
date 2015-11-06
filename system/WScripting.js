@@ -11,7 +11,7 @@
     
     self.getCommands = GetCommands;
     
-    self.parse = Parse;
+    self.execute = Execute;
     
     
     function GetCommands(){
@@ -23,7 +23,7 @@
     // kwargs are optional
     // flags default to false, their precense changes to true
     
-    function Parse(sequence){
+    function Execute(sequence){
       var strippedSequence = sequence;
       strippedSequence = strippedSequence.replace(/\s+/g, ' ');
       strippedSequence = strippedSequence.replace(/^\s*/g, '');
@@ -35,6 +35,12 @@
       var command = partsList[0];
       
       var funcSpec = indexedFuncSpec[command];
+      
+      if (funcSpec === undefined){
+        WLogger.warn('Command not found:', command);
+        throw 'Command not found';
+      }
+      
       var worker = funcSpec.worker;
       var args = funcSpec.args;
       var usableArgs = args.concat([]);
@@ -99,7 +105,7 @@
         
       }
       
-      worker(parameters);
+      return worker(parameters);
     }
     function SplitSequence(sequence){
       var split = [];
