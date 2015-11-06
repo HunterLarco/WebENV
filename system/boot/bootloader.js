@@ -19,6 +19,8 @@
       
       for(var i=0,lib; lib=dependencies[i++];)
         RequireLib(lib);
+      
+      LoadLibraryFromQueue();
     }
     function RegisterLib(lib){
       var identifier = lib.identifier;
@@ -35,8 +37,7 @@
       libmanager.register(library);
       WLogger.inform('BOOTLOADER registered WLibrary:', identifier);
       
-      if (!libmanager.hasPending())
-        DidFinishLaunch();
+      LoadLibraryFromQueue();
     }
     
     function GetLibraryManager(){
@@ -44,6 +45,11 @@
     }
     
     
+    function LoadLibraryFromQueue(){
+      var pendingLib = libmanager.getPendingLibraries();
+      if (pendingLib.length == 0) return DidFinishLaunch();
+      pendingLib[0].load();
+    }
     function RequireLib(lib){
       var library = new WLibrary({
         'identifier': lib.identifier,
@@ -52,7 +58,6 @@
       });
       
       libmanager.notify(library);
-      library.load();
     }
     function DidFinishLaunch(){
       if(window.didBootLaunch !== undefined)

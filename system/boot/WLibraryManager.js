@@ -27,6 +27,7 @@
     self.register = Register;
     
     self.getLibraries = GetLibraries;
+    self.getPendingLibraries = GetPendingLibraries;
     self.getIdentifierList = GetIdentifierList;
     
     
@@ -73,7 +74,10 @@
     }
     
     function GetLibraries(){
-      return liblist;
+      return liblist.concat([]);
+    }
+    function GetPendingLibraries(){
+      return pendingLibList.concat([]);
     }
     function GetIdentifierList(){
       return liblist.map(function(value){
