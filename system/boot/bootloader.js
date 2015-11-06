@@ -5,8 +5,15 @@
     var undefined;
     
     
-    var libmanager;
+    var packages = [];
+    var libmanager = new WLibraryManager();
     
+    var preloadCallbacks = {};
+    var hasLaunched = false;
+    
+    
+    self.setPackages = SetPackages;
+    self.preload = PreloadLibrary;
     
     self.launch = Launch;
     self.register = RegisterLib;
@@ -14,10 +21,29 @@
     self.getLibraryManager = GetLibraryManager;
     
     
-    function Launch(dependencies){
-      libmanager = new WLibraryManager();
+    function SetPackages(_packages){
+      packages = _packages;
+    }
+    function PreloadLibrary(identifier, callback){
+      for(var i=0,lib; lib=packages[i++];)
+        if(lib.identifier === identifier){
+          preloadCallbacks[identifier] = callback;
+          RequireLib(lib).load();
+          return;
+        }
       
-      for(var i=0,lib; lib=dependencies[i++];)
+      WLogger.error('Unknown WLibrary preload attempt:', identifier);
+      throw 'Unknown WLibrary preload attempt';
+    }
+    
+    function Launch(){
+      if(hasLaunched){
+        WLogger.error('BOOTLOADER cannot launch twice');
+        throw 'BOOTLOADER cannot launch twice';
+      }
+      hasLaunched = true;
+      
+      for(var i=0,lib; lib=packages[i++];)
         RequireLib(lib);
       
       LoadLibraryFromQueue();
@@ -27,7 +53,7 @@
       var worker = lib.worker;
       
       if(!libmanager.hasPendingByIdentifier(identifier)){
-        WLogger.warn('Unknown library registered:', identifier);
+        WLogger.warn('Unknown WLibrary registered:', identifier);
         return;
       }
       
@@ -37,7 +63,15 @@
       libmanager.register(library);
       WLogger.inform('BOOTLOADER registered WLibrary:', identifier);
       
-      LoadLibraryFromQueue();
+      if(hasLaunched){
+        LoadLibraryFromQueue();
+      }else{
+        var callback = preloadCallbacks[identifier];
+        if (callback !== undefined){
+          delete preloadCallbacks[identifier];
+          callback();
+        }
+      }
     }
     
     function GetLibraryManager(){
@@ -59,6 +93,7 @@
       });
       
       libmanager.notify(library);
+      return library;
     }
     function DidFinishLaunch(){
       if(window.didBootLaunch !== undefined)

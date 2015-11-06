@@ -13,10 +13,10 @@
 
 </style>
   
-<script src='system/boot/bootloader.js'></script>
 <script src='system/boot/WLogger.js'></script>
 <script src='system/boot/WLibrary.js'></script>
 <script src='system/boot/WLibraryManager.js'></script>
+<script src='system/boot/bootloader.js'></script>
 
 <script src='system/packages.js'></script>
 
@@ -29,7 +29,12 @@
 (function(){
   
   window.onload = function(){
-    BOOTLOADER.launch(PACKAGES)
+    BOOTLOADER.setPackages(PACKAGES);
+    BOOTLOADER.preload('WShell', OnShellLoad);
+  }
+  function OnShellLoad(){
+    new WShell(document.querySelector('.shellwindow'));
+    BOOTLOADER.launch();
   }
   
   window.didBootLaunch = function(){
@@ -102,12 +107,6 @@
     
     
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
-    
-    
-    new WShell({
-      'parser': parser,
-      'frame': document.querySelector('.shellwindow')
-    });
     
     
     

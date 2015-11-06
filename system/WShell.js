@@ -5,15 +5,33 @@
     var undefined;
     
     
-    var parser;
     var frame;
+    var shellWindow;
     
+    
+    
+    
+    function BindLogger(){
+      WLogger.listen('inform', OnInform);
+      WLogger.listen('warn', OnWarn);
+      WLogger.listen('error', OnError);
+    }
+    
+    function OnInform(event){
+      // console.info(event);
+    }
+    function OnWarn(event){
+      // console.warn(event);
+    }
+    function OnError(event){
+      // console.error(event);
+    }
     
     function LoadGUI(){
-      var shellWindow = CreateElement('div', { 'class': 'wshell' });
+      shellWindow = CreateElement('div', { 'class': 'wshell' });
       frame.appendChild(shellWindow);
     }
-    function CreateElement(elemType, attributes){
+    function CreateElement(elemType, attributes, innerHTML){
       var elem = document.createElement(elemType);
       
       for(var key in attributes){
@@ -21,17 +39,19 @@
         elem.setAttribute(key, attributeValue);
       }
       
+      if(innerHTML !== undefined)
+        elem.innerHTML = innerHTML;
+      
       return elem;
     }
     
     
-    (function Constructor(obj){
-      parser = obj.parser;
-      
-      if(obj.frame !== undefined && frame !== null) frame = obj.frame;
+    (function Constructor(_frame){
+      if(_frame !== undefined && _frame !== null) frame = _frame;
       else frame = document.body;
       
       LoadGUI();
+      BindLogger();
     }).apply(self, arguments);
   }
   

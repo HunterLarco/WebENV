@@ -2,5 +2,46 @@
   height:100%;
   width:100%;
   
+	-webkit-font-smoothing:antialiased;
+  
   background:rgb(17,17,17);
+  color:rgb(255,255,255);
+  
+  font-size:15px;
+  line-height:18px;
+  font-weight:400;
+  font-family:monospace;
+  
+  padding:4px;
+}
+
+.wshell .line{
+  margin:4px;
+  position:relative;
+  
+  white-space: normal;
+  word-wrap: break-word;
+}
+.wshell .line .mount{
+  color:rgb(208,0,93);
+}
+.wshell .line .func{
+  color:rgb(255,204,0);
+}
+.wshell .line .colored{
+  color:rgb(66,93,130);
+}
+
+.wshell cursor{
+  position:absolute;
+  left:0px;
+  top:0px;
+  
+  display:block;
+  vertical-align:top;
+  
+  height:18px;
+  width:9px;
+  
+  background:rgb(200,200,200);
 }

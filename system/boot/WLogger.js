@@ -8,6 +8,8 @@
     var verbose = true;
     var groupHeight = 0;
     
+    var listeners = {};
+    
     
     const SYSTEMSTRING = 'WebENV:system$';
     const SYSTEMCOLOR = 'rgb(160,160,160)';
@@ -21,11 +23,18 @@
     self.closeGroup = CloseGroup;
     
     self.try = Try;
+    self.listen = Listen;
     
     
     function LogInform(){
       var message = arguments[0];
       var extras = Array.prototype.slice.call(arguments, 1);
+      
+      RunEvent('inform', {
+        'message': message,
+        'extras': extras,
+        'handle': SYSTEMSTRING
+      });
       
       LogMessage('INFO', message, extras, {
         'handle': 'rgb(96,125,139)',
@@ -36,6 +45,12 @@
       var message = arguments[0];
       var extras = Array.prototype.slice.call(arguments, 1);
       
+      RunEvent('warn', {
+        'message': message,
+        'extras': extras,
+        'handle': SYSTEMSTRING
+      });
+      
       LogMessage('WARN', message, extras, {
         'handle': 'rgb(255,152,0)',
         'extras': 'rgb(0,0,255)'
@@ -45,10 +60,23 @@
       var message = arguments[0];
       var extras = Array.prototype.slice.call(arguments, 1);
       
+      RunEvent('error', {
+        'message': message,
+        'extras': extras,
+        'handle': SYSTEMSTRING
+      });
+      
       LogMessage('ERRO', message, extras, {
         'handle': 'rgb(255,0,0)',
         'extras': 'rgb(0,0,255)'
       });
+    }
+    
+    function MakeGroup(){
+      groupHeight++;
+    }
+    function CloseGroup(){
+      groupHeight = Math.max(0, groupHeight-1);
     }
     
     function Try(func){
@@ -57,12 +85,13 @@
       verbose = true;
       return result;
     }
-    
-    function MakeGroup(){
-      groupHeight++;
+    function Listen(eventName, func){
+      listeners[eventName] = func;
     }
-    function CloseGroup(){
-      groupHeight = Math.max(0, groupHeight-1);
+    function RunEvent(eventName, event){
+      var func = listeners[eventName];
+      if(func === undefined) return;
+      func(event);
     }
     
     
