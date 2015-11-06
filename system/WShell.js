@@ -33,6 +33,7 @@
     self.setParser = SetParser;
     self.getParser = GetParser;
     
+    self.clear = Clear;
     self.start = Start;
     
     
@@ -45,6 +46,9 @@
       return parser;
     }
     
+    function Clear(){
+      lineWindow.innerHTML = '';
+    }
     function Start(){
       ShowMountMessage();
       CreateInputBindings();
@@ -57,13 +61,16 @@
       var line = CreateElement('div', { 'class':'line' });
       
       line.appendChild(CreateElement('br'));
-      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '---------------------------------------------------------------'));
+      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '--------------------------------------------------------------------'));
       line.appendChild(CreateElement('br'));
       
-      var mountString = CreateElement('span', { 'class':'mount' }, 'Mounting');
+      var mountString = document.createTextNode('Welcome to WebENV! If you haven\'t been here type help to get started');
       line.appendChild(mountString);
       
-      line.appendChild(document.createTextNode(' guest'));
+      line.appendChild(CreateElement('br'));
+      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '--------------------------------------------------------------------'));
+      line.appendChild(CreateElement('br'));
+      line.appendChild(CreateElement('br'));
       
       AddLine(line);
     }

@@ -75,13 +75,21 @@
       },
       
       {
-        'command': 'info',
-        'args': 'command',
+        'command': 'help',
+        'args': 'command[]',
         'kwargs': '',
         'flags': '',
         'worker': CommandInfo
+      },
+      
+      {
+        'command': 'clear',
+        'args': '',
+        'kwargs': '',
+        'flags': '',
+        'worker': ClearShell
       }
-  
+      
     ]);
     
     
@@ -164,6 +172,10 @@
     
     function CommandInfo(obj){
       var command = obj.command;
+      
+      if(command.length === 0)
+        return PrintAllCommands();
+      
       var spec = wshell.getParser().getCommandSpec(command);
       
       var args = spec.args;
@@ -205,7 +217,20 @@
       
       return response;
     }
+    function PrintAllCommands(){
+      var commands = wshell.getParser().getCommands();
+      var response = '';
+      
+      response += 'Commands\n';
+      response += '\t' + commands.join('\n\t') + '\n\n';
+      response += 'Type help [command] for help using a specific command.';
+      
+      return response;
+    }
     
+    function ClearShell(){
+      wshell.clear();
+    }
     
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
     
