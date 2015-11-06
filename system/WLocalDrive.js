@@ -39,6 +39,12 @@
     
     function MakeDirectory(wpath){
       var newDirName = wpath.getLastToken();
+      
+      if (!newDirName.match(/^[a-zA-Z\s\-_0-9]+$/)){
+        WLogger.error('Invalid folder name. Fails to conform to expected pattern:', '^[a-zA-Z\\s\\-_0-9]+$');
+        throw 'Invalid folder name. Fails to conform to expected pattern.';
+      }
+      
       var enclosingPath = wpath.concat('..');
       var enclosingDir = LocatePath(enclosingPath);
       

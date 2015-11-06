@@ -38,11 +38,11 @@
       },
       
       {
-        'command': 'getdir',
+        'command': 'ls',
         'args': 'dirname',
         'kwargs': '',
         'flags': '',
-        'worker': GetDir
+        'worker': ListDir
       }
   
     ]);
@@ -57,8 +57,13 @@
       // WLocalDrive.saveToLocalStorage();
     }
     
-    function GetDir(obj){
-      return WLocalDrive.locatePath(new WPath(obj.dirname));
+    function ListDir(obj){
+      var dir = WLocalDrive.locatePath(new WPath(obj.dirname));
+      var children = dir.getChildren();
+      return children.map(function(value){
+        if (value instanceof WDirectory) return value.getDirectoryName();
+        else return value.getFileBlob().getFileName();
+      });
     }
     
     
