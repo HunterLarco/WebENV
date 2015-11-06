@@ -85,6 +85,11 @@
       pendingLib[0].load();
     }
     function RequireLib(lib){
+      if(libmanager.hasByIdentifier(lib.identifier)){
+        WLogger.warn('WLibrary already loaded. Skipping:', lib.identifier);
+        return;
+      }
+      
       var library = new WLibrary({
         'identifier': lib.identifier,
         'description': lib.description,
