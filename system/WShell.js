@@ -142,7 +142,9 @@
     function ExecuteInput(){
       try{
         parser.execute(currentLineValue);
-      }catch(e){}
+      }catch(e){
+        console.warn('Execution threw:', e);
+      }
       CreateNewInputLine();
     }
     

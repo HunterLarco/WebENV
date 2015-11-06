@@ -5,6 +5,7 @@
     var undefined;
     
     
+    var willPrintToConsole = false;
     var verbose = true;
     var groupHeight = 0;
     
@@ -24,6 +25,9 @@
     
     self.try = Try;
     self.listen = Listen;
+    
+    self.setPrintToConsole = SetPrintToConsole;
+    self.getPrintToConsole = GetPrintToConsole;
     
     
     function LogInform(){
@@ -99,9 +103,17 @@
         func(event);
     }
     
+    function SetPrintToConsole(willprint){
+      willPrintToConsole = willprint;
+    }
+    function GetPrintToConsole(){
+      return willPrintToConsole;
+    }
+    
     
     function LogMessage(handle, message, extras, colors){
       if(!verbose) return;
+      if(!willPrintToConsole) return;
       
       if(message === undefined) message = '';
       if(extras === undefined) extras = '';

@@ -43,6 +43,7 @@
       
       var worker = funcSpec.worker;
       var args = funcSpec.args;
+      var argdefaults = funcSpec.argdefaults;
       var usableArgs = args.concat([]);
       var kwargs = funcSpec.kwargs;
       var flags = funcSpec.flags;
@@ -106,6 +107,17 @@
         
       }
       
+      if(usableArgs.length !== 0){
+        for(var i=0,leftoverArg; leftoverArg=usableArgs[i++];){
+          var defaultArg = argdefaults[leftoverArg];
+          if(defaultArg === undefined){
+            WLogger.warn('Received arguments are less than expected for command:', command);
+            throw 'Received arguments are less than expected';
+          }
+          parameters[leftoverArg] = defaultArg;
+        }
+      }
+      
       return worker(parameters);
     }
     function SplitSequence(sequence){
@@ -137,7 +149,8 @@
         throw 'Unexpected end of string';
       }
       
-      split.push(lastSection);
+      if(lastSection.length !== 0)
+        split.push(lastSection);
       return split;
     }
     
@@ -151,13 +164,23 @@
         }
         
         var args = func.args.length == 0 ? [] : func.args.split(' ');
+        var argdefaults = {};
         var kwargs = func.kwargs.length == 0 ? [] : func.kwargs.split(' ');
         var flags = func.flags.length == 0 ? [] : func.flags.split(' ');
         var worker = func.worker;
         
+        args = args.map(function(arg){
+          var argMap = arg.match(/([^\[]+)(?:\[([^\]]+)\])?/);
+          var argName = argMap[1];
+          var argDefault = argMap[2];
+          argdefaults[argName] = argDefault;
+          return argName;
+        });
+        
         funcList.push(command);
         indexedFuncSpec[command] = {
           args: args,
+          argdefaults: argdefaults,
           flags: flags,
           kwargs: kwargs,
           worker: worker
