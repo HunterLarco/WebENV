@@ -176,7 +176,7 @@
         var worker = func.worker;
         
         args = args.map(function(arg){
-          var argMap = arg.match(/([^\[]+)(?:\[([^\]]+)\])?/);
+          var argMap = arg.match(/([^\[]+)(?:\[([^\]]*)\])?/);
           var argName = argMap[1];
           var argDefault = argMap[2];
           argdefaults[argName] = argDefault;
