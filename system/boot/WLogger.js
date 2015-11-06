@@ -92,6 +92,7 @@
       listenDict.push(func);
     }
     function RunEvent(eventName, event){
+      if(!verbose) return;
       var funcList = listeners[eventName];
       if(funcList === undefined) return;
       for(var i=0,func; func=funcList[i++];)
