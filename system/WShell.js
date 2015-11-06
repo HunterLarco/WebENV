@@ -5,6 +5,8 @@
     var undefined;
     
     
+    var MOUNTSTRING = 'console:~/ guest$ ';
+    
     var frame;
     var shellWindow;
     var lineWindow;
@@ -14,7 +16,14 @@
     var currentLineValue;
     var inputLine;
     var inputTextSpan;
+    
+    const CURSORWIDTH = 9;
+    const CURSORFLASH = 500;
+    var cursorFlashState = false;
+    var cursorInterval;
     var cursorIndex;
+    var cursorElem;
+    
     
     var commandMemory = [];
     var memoryIndex = 0;
@@ -121,7 +130,7 @@
       UpdateInputText();
     }
     
-    // arrow key operations
+    // cursor things
     function MoveCursor(direction){
       var newCursorIndex = cursorIndex + direction;
       
@@ -129,6 +138,26 @@
       if(newCursorIndex > currentLineValue.length) return;
       
       cursorIndex = newCursorIndex;
+      UpdateCursorPosition();
+    }
+    function UpdateCursorPosition(){
+      var cursor = currentLineValue.length - cursorIndex;
+      var position = MOUNTSTRING.length + cursor;
+      cursorElem.style.left = CURSORWIDTH * position;
+      ResetCursorFlash();
+    }
+    function ResetCursorFlash(){
+      clearInterval(cursorInterval);
+      cursorFlashState = false;
+      cursorInterval = setInterval(FlashCursor, CURSORFLASH);
+      FlashCursor();
+    }
+    function FlashCursor(){
+      cursorFlashState = !cursorFlashState;
+      cursorElem.style.display = cursorFlashState ? 'block' : 'none';
+    }
+    function RemoveCursor(){
+      cursorElem.parentElement.removeChild(cursorElem);
     }
     function SetCommandFromMemory(direction){
       var newMemoryIndex = memoryIndex + direction;
@@ -161,13 +190,17 @@
       
       inputLine = CreateElement('div', { 'class':'line' });
       
-      var handleElem = CreateElement('span', { 'class':'mount' }, 'console:~/ guest$ ');
+      var handleElem = CreateElement('span', { 'class':'mount' }, MOUNTSTRING);
       inputLine.appendChild(handleElem);
       
       inputTextSpan = CreateElement('span');
       inputLine.appendChild(inputTextSpan);
       
+      cursorElem = CreateElement('cursor');
+      inputLine.appendChild(cursorElem);
+
       AddLine(inputLine);
+      UpdateCursorPosition();
     }
     function MayType(){
       return inputLine !== undefined;
@@ -175,9 +208,12 @@
     function UpdateInputText(){
       if(!MayType()) return false;
       inputTextSpan.innerHTML = FormatTextForHTML(currentLineValue);
+      UpdateCursorPosition();
       return true;
     }
     function ExecuteInput(){
+      RemoveCursor();
+      
       try{
         if(currentLineValue.replace(/\s|\n/g, '').length !== 0)
           commandMemory.push(currentLineValue);
