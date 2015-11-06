@@ -49,13 +49,14 @@
     }
     function CollapsePath(pathString){
       var decomposedPath = DecomposePath(pathString);
+      var cleanedPathString = '/' + decomposedPath.join('/');
       var shortenedPath = [];
       
       for(var i=0,part; part=decomposedPath[i++];){
         if(part == '.') continue;
         if(part == '..'){
           if (shortenedPath.length == 0){
-            WLogger.error('Unable to locate path below root folder:', pathString);
+            WLogger.error('Unable to locate path below root folder:', cleanedPathString);
             throw 'Unable to locate path below root folder.';
           }
           shortenedPath = shortenedPath.slice(0, -1);

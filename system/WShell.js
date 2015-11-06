@@ -130,22 +130,21 @@
     }
     function UpdateInputText(){
       if(!MayType()) return false;
-      
-      var text = currentLineValue;
-      text = text.replace(/\t/g, '    ');
-      text = text.replace(/\s/g, '&nbsp;');
-      text = text.replace(/\n/g, '<br/>');
-      inputTextSpan.innerHTML = text;
-      
+      inputTextSpan.innerHTML = FormatTextForHTML(currentLineValue);
       return true;
     }
     function ExecuteInput(){
       try{
-        parser.execute(currentLineValue);
+        var response = parser.execute(currentLineValue);
+        if(response !== undefined) PrintOutput(response);
       }catch(e){
         console.warn('Execution threw:', e);
       }
       CreateNewInputLine();
+    }
+    function PrintOutput(text){
+      var line = CreateElement('div', { 'class':'line' }, FormatTextForHTML(text));
+      AddLine(line);
     }
     
     // dealing with WLogger output
@@ -184,6 +183,12 @@
     }
     
     // adds lines to view
+    function FormatTextForHTML(text){
+      text = text.replace(/\t/g, '    ');
+      text = text.replace(/ /g, '&nbsp;');
+      text = text.replace(/\n/g, '<br/>');
+      return text;
+    }
     function AddLine(line){
       var wasAtBottom = IsAtBottom();
       lineWindow.appendChild(line);

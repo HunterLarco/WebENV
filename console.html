@@ -63,14 +63,23 @@
         'kwargs': '',
         'flags': '',
         'worker': ListDir
+      },
+      
+      {
+        'command': 'cd',
+        'args': 'path',
+        'kwargs': '',
+        'flags': '',
+        'worker': CurrentDirectory
       }
   
     ]);
     
     
+    var workingDirectory = new WPath('/');
 
     function DoMakeDir(obj){
-      var path = new WPath(obj.dirname);
+      var path = workingDirectory.concat(obj.dirname);
       
       if(obj.p){
         MakeDirectoryWithFillin(path, obj.v);
@@ -98,13 +107,31 @@
     }
     
     function ListDir(obj){
-      var dir = WLocalDrive.locatePath(new WPath(obj.dirname));
+      var wpath = workingDirectory.concat(obj.dirname);
+      var output = [];
+      
+      var dir = WLocalDrive.locatePath(wpath);
       var children = dir.getChildren();
       
       for(var i=0,child; child=children[i++];){
-        if (child instanceof WDirectory) WLogger.inform(child.getDirectoryName());
-        else return WLogger.inform(child.getFileBlob().getFileName());
+        if (child instanceof WDirectory) output.push(child.getDirectoryName());
+        else return output.push(child.getFileBlob().getFileName());
       }
+      
+      if(output.length === 0)
+        return 'Directory is empty';
+      return output.join('\n');
+    }
+    
+    function CurrentDirectory(obj){
+      var pathString = obj.path;
+      var newDirectory;
+      
+      if(pathString[0] === '/') newDirectory = new WPath(pathString);
+      else newDirectory = workingDirectory.concat(pathString);
+      
+      WLocalDrive.locatePath(newDirectory);
+      workingDirectory = newDirectory;
     }
     
     
