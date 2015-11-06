@@ -15,11 +15,14 @@
     var inputLine;
     var inputTextSpan;
     
+    var commandMemory = [];
+    var memoryIndex = 0;
+    var originalMemoryValue;
+    
     
     self.setParser = SetParser;
     self.getParser = GetParser;
     
-    self.execute = Execute;
     self.start = Start;
     
     
@@ -32,14 +35,12 @@
       return parser;
     }
     
-    function Execute(){
-      
-    }
     function Start(){
       ShowMountMessage();
       CreateInputBindings();
       CreateNewInputLine();
     }
+    
     
     // initialize input functions
     function ShowMountMessage(){
@@ -90,6 +91,8 @@
     function ProcessSpecialCharacter(keycode){
       if(keycode === 8) RemoveLetter();
       else if(keycode === 13) ExecuteInput();
+      else if(keycode === 38) SetCommandFromMemory( 1);
+      else if(keycode === 40) SetCommandFromMemory(-1);
     }
     function KeyPressed(event){
       // WLogger.inform('key pressed event', event.keyCode);
@@ -112,8 +115,33 @@
       UpdateInputText();
     }
     
+    function SetCommandFromMemory(direction){
+      var newMemoryIndex = memoryIndex + direction;
+      
+      if(newMemoryIndex > commandMemory.length) return;
+      if(newMemoryIndex < 0) return;
+      
+      if(newMemoryIndex == 0 && memoryIndex != 0){
+        memoryIndex = 0;
+        currentLineValue = originalMemoryValue;
+        UpdateInputText();
+        return;
+      } 
+      
+      if(memoryIndex == 0)
+        originalMemoryValue = currentLineValue;
+      memoryIndex = newMemoryIndex;
+      
+      var shiftedIndex = memoryIndex - 1;
+      var flippedIndex = commandMemory.length - 1 - shiftedIndex;
+      var oldCommand = commandMemory[flippedIndex];
+      currentLineValue = oldCommand;
+      UpdateInputText();
+    }
+    
     function CreateNewInputLine(){
       currentLineValue = '';
+      memoryIndex = 0;
       
       inputLine = CreateElement('div', { 'class':'line' });
       
@@ -135,6 +163,9 @@
     }
     function ExecuteInput(){
       try{
+        if(currentLineValue.replace(/\s|\n/g, '').length !== 0)
+          commandMemory.push(currentLineValue);
+        
         var response = parser.execute(currentLineValue);
         if(response !== undefined) PrintOutput(response);
       }catch(e){
