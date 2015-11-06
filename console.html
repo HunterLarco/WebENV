@@ -1,5 +1,17 @@
 <html>
 <head>
+<style>
+
+.shellwindow{
+  position:fixed;
+  
+  top:0px;
+  left:0px;
+  right:0px;
+  bottom:0px;
+}
+
+</style>
   
 <script src='system/boot/bootloader.js'></script>
 <script src='system/boot/WLogger.js'></script>
@@ -7,12 +19,11 @@
 <script src='system/boot/WLibraryManager.js'></script>
 
 <script src='system/packages.js'></script>
-  
+
 </head>
 <body>
-  
-  WebENV
 
+<div class='shellwindow'></div>
 
 <script>
 (function(){
@@ -90,10 +101,16 @@
     }
     
     
-    window.parser = parser;
-    
-    
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
+    
+    
+    new WShell({
+      'parser': parser,
+      'frame': document.querySelector('.shellwindow')
+    });
+    
+    
+    
         //
     // parser.execute('mkdir test');
     // // parser.execute('mkdir --force --lolol --test lol arg --test lol2');

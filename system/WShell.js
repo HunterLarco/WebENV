@@ -9,13 +9,26 @@
     var frame;
     
     
-    function LoadGUI(){}
+    function LoadGUI(){
+      var shellWindow = CreateElement('div', { 'class': 'wshell' });
+      frame.appendChild(shellWindow);
+    }
+    function CreateElement(elemType, attributes){
+      var elem = document.createElement(elemType);
+      
+      for(var key in attributes){
+        var attributeValue = attributes[key];
+        elem.setAttribute(key, attributeValue);
+      }
+      
+      return elem;
+    }
     
     
     (function Constructor(obj){
       parser = obj.parser;
       
-      if(obj.frame !== undefined) frame = obj.frame;
+      if(obj.frame !== undefined && frame !== null) frame = obj.frame;
       else frame = document.body;
       
       LoadGUI();

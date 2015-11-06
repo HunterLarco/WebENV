@@ -106,8 +106,10 @@
       var extension = requirement.slice(extensionIndex + 1);
       
       if(extension === 'css'){
-        var elem = document.createElement('style');
-        elem.setAttribute('src', requirement);
+        var elem = document.createElement('link');
+        elem.setAttribute('href', requirement);
+        elem.setAttribute('rel', 'stylesheet');
+        elem.setAttribute('type', 'text/css');
       }else if(extension === 'js' || extension === 'json'){
         var elem = document.createElement('script');
         elem.setAttribute('src', requirement);
