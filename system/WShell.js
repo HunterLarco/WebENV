@@ -184,7 +184,7 @@
     
     // adds lines to view
     function FormatTextForHTML(text){
-      text = text.replace(/\t/g, '    ');
+      text = text.replace(/\t/g, '  ');
       text = text.replace(/ /g, '&nbsp;');
       text = text.replace(/\n/g, '<br/>');
       return text;

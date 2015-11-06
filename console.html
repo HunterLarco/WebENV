@@ -61,7 +61,7 @@
         'command': 'ls',
         'args': 'dirname[/]',
         'kwargs': '',
-        'flags': '',
+        'flags': 'print',
         'worker': ListDir
       },
       
@@ -71,6 +71,14 @@
         'kwargs': '',
         'flags': '',
         'worker': CurrentDirectory
+      },
+      
+      {
+        'command': 'info',
+        'args': 'command',
+        'kwargs': '',
+        'flags': '',
+        'worker': CommandInfo
       }
   
     ]);
@@ -108,9 +116,17 @@
     
     function ListDir(obj){
       var wpath = workingDirectory.concat(obj.dirname);
+      var dir = WLocalDrive.locatePath(wpath);
+      
+      if(obj.print){
+        var output = ListNestedDir(dir);
+        if(output.length === 0)
+          return 'Directory is empty';
+        return output.join('\n');
+      }
+      
       var output = [];
       
-      var dir = WLocalDrive.locatePath(wpath);
       var children = dir.getChildren();
       
       for(var i=0,child; child=children[i++];){
@@ -121,6 +137,17 @@
       if(output.length === 0)
         return 'Directory is empty';
       return output.join('\n');
+    }
+    function ListNestedDir(dir){
+      var children = dir.getChildren();
+      var output = [];
+      
+      for(var i=0,child; child=children[i++];){
+        output.push(child.getPath().getPathAsString());
+        output = output.concat(ListNestedDir(child));
+      }
+      
+      return output;
     }
     
     function CurrentDirectory(obj){
@@ -134,6 +161,50 @@
       workingDirectory = newDirectory;
     }
     
+    function CommandInfo(obj){
+      var command = obj.command;
+      var spec = wshell.getParser().getCommandSpec(command);
+      
+      var args = spec.args;
+      var argdefaults = spec.argdefaults;
+      var kwargs = spec.kwargs;
+      var flags = spec.flags;
+      
+      var response = '';
+      
+      response += 'Required Arguments\n';
+      for(var i=0,arg; arg=args[i++];){
+        response += '\t' + arg;
+        var defaultarg = argdefaults[arg];
+        if(defaultarg !== undefined)
+          response += '\n\t\tdefault_value = "' + defaultarg + '"';
+        response += '\n';
+      }
+      if(args.length === 0)
+        response += '\tNo required arguments\n';
+      response += '\n';
+      
+      response += 'Keyword Arguments (optionals)\n';
+      for(var i=0,kwarg; kwarg=kwargs[i++];){
+        response += '\t' + kwarg;
+        response += '\t\tdefault_value = None';
+        response += '\n';
+      }
+      if(kwargs.length === 0)
+        response += '\tNo keyword arguments\n';
+      response += '\n';
+      
+      response += 'Flags\n';
+      for(var i=0,flag; flag=flags[i++];){
+        response += '\t' + flag;
+        response += '\n';
+      }
+      if(flags.length === 0)
+        response += '\tNo flags\n';
+      
+      return response;
+    }
+    
     
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
     
@@ -141,62 +212,6 @@
     wshell.setParser(parser);
     wshell.start();
     
-    
-        //
-    // parser.execute('mkdir test');
-    // // parser.execute('mkdir --force --lolol --test lol arg --test lol2');
-    // // parser.execute('mkdir --force --test lol arg --test lol2');
-    // // parser.execute('mkdir --force arg --test');
-    // // parser.execute('mkdir arg --test --force lol');
-    // parser.execute('mkdir --force arg --test lol');
-    // parser.execute('mkdir --force --test lol arg');
-    // parser.execute('mkdir --dirname test');
-    // parser.execute('mkdir test --force');
-    // parser.execute('mkdir --force test');
-    //
-    // parser.execute('mkdir --force "this is a test"');
-    // parser.execute('mkdir --test "test again" "this is a test"');
-    // // parser.execute('mkdir --test "test again" this is a test"');
-    // // parser.execute('mkdir "test again\\\\" this is a test"');
-    // parser.execute('mkdir "test again\\\" this is a test"');
-    //
-    
-    return
-    
-        //
-    // WLocalDrive.loadFromLocalStorage();
-    //
-    // var file = WLocalDrive.locatePath(new WPath('/test/asd/test.lol'));
-    // console.log(file.getFileBlob().getContent())
-    //
-    // return
-    //
-    
-    // Inspect(new WPath('/users/temp/test.txt'))
-    // Inspect(new WPath('/users/temp/../..'))
-    // Inspect(new WPath('users/temp/archive.rar'))
-    // Inspect(new WPath('/users'))
-    // Inspect(new WPath('/').concat('./homework.txt'))
-    // Inspect(new WPath('/').concat('./users'))
-    // Inspect(new WPath('/users').concat('..'))
-    // Inspect(new WPath('/users').concat('../..'))
-    
-    WLocalDrive.makeDirectory(new WPath('/test'));
-    WLocalDrive.makeDirectory(new WPath('/test/asd'));
-    
-    // WLocalDrive.makeDirectory(new WPath('/test'));
-    // WLocalDrive.makeDirectory(new WPath('/test/lol.txt'));
-    
-    // WLocalDrive.makeDirectory(new WPath('/tests/asd'));
-    
-    WLocalDrive.writeFile(
-      new WFile({
-        'path': new WPath('/test/asd'),
-        'blob': new WFileBlob({ name:'test.lol', content:'is this working?' })
-      })
-    );
-    
-    WLocalDrive.saveToLocalStorage();
   }
   
   function Inspect(wpath){

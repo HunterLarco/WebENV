@@ -10,12 +10,23 @@
     
     
     self.getCommands = GetCommands;
+    self.getCommandSpec = GetCommandSpec;
     
     self.execute = Execute;
     
     
     function GetCommands(){
       return funcList.concat([]);
+    }
+    function GetCommandSpec(command){
+      var funcSpec = indexedFuncSpec[command];
+      
+      if (funcSpec === undefined){
+        WLogger.warn('Command not found:', command);
+        throw 'Command not found';
+      }
+      
+      return funcSpec;
     }
     
     // args are all required
@@ -34,12 +45,7 @@
       var partsList = SplitSequence(strippedSequence);
       var command = partsList[0];
       
-      var funcSpec = indexedFuncSpec[command];
-      
-      if (funcSpec === undefined){
-        WLogger.warn('Command not found:', command);
-        throw 'Command not found';
-      }
+      var funcSpec = GetCommandSpec(command);
       
       var worker = funcSpec.worker;
       var args = funcSpec.args;
@@ -111,8 +117,8 @@
         for(var i=0,leftoverArg; leftoverArg=usableArgs[i++];){
           var defaultArg = argdefaults[leftoverArg];
           if(defaultArg === undefined){
-            WLogger.warn('Received arguments are less than expected for command:', command);
-            throw 'Received arguments are less than expected';
+            WLogger.warn('Missing arguments for command:', command);
+            throw 'Missing arguments for command';
           }
           parameters[leftoverArg] = defaultArg;
         }
