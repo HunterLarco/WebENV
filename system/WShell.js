@@ -14,6 +14,7 @@
     var currentLineValue;
     var inputLine;
     var inputTextSpan;
+    var cursorIndex;
     
     var commandMemory = [];
     var memoryIndex = 0;
@@ -93,6 +94,8 @@
       else if(keycode === 13) ExecuteInput();
       else if(keycode === 38) SetCommandFromMemory( 1);
       else if(keycode === 40) SetCommandFromMemory(-1);
+      else if(keycode === 37) MoveCursor( 1);
+      else if(keycode === 39) MoveCursor(-1);
     }
     function KeyPressed(event){
       // WLogger.inform('key pressed event', event.keyCode);
@@ -107,14 +110,26 @@
     }
     
     function RemoveLetter(){
-      currentLineValue = currentLineValue.slice(0,-1);
+      var cursor = currentLineValue.length - cursorIndex;
+      if(cursor === 0) return;
+      currentLineValue = currentLineValue.slice(0, cursor - 1) + currentLineValue.slice(cursor);
       UpdateInputText();
     }
     function AddLetter(character){
-      currentLineValue += character;
+      var cursor = currentLineValue.length - cursorIndex;
+      currentLineValue = currentLineValue.slice(0, cursor) + character + currentLineValue.slice(cursor);
       UpdateInputText();
     }
     
+    // arrow key operations
+    function MoveCursor(direction){
+      var newCursorIndex = cursorIndex + direction;
+      
+      if(newCursorIndex < 0) return;
+      if(newCursorIndex > currentLineValue.length) return;
+      
+      cursorIndex = newCursorIndex;
+    }
     function SetCommandFromMemory(direction){
       var newMemoryIndex = memoryIndex + direction;
       
@@ -142,6 +157,7 @@
     function CreateNewInputLine(){
       currentLineValue = '';
       memoryIndex = 0;
+      cursorIndex = 0;
       
       inputLine = CreateElement('div', { 'class':'line' });
       
