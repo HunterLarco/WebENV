@@ -103,6 +103,9 @@
       return library;
     }
     function DidFinishLaunch(){
+      var libraryList = libmanager.getIdentifierList();
+      WLogger.inform('ENV Launched with Libraries:', libraryList.join(', '));
+      
       if(window.didBootLaunch !== undefined)
         setTimeout(window.didBootLaunch, 0);
     }

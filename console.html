@@ -42,11 +42,6 @@
   }
   
   window.didBootLaunch = function(){
-    var libraryList = BOOTLOADER.getLibraryManager().getIdentifierList();
-    WLogger.inform('ENV Launched with Libraries:', libraryList.join(', '));
-    
-    
-    
     var parser = new WScripting([
   
       {
@@ -114,7 +109,6 @@
       }
       
     ]);
-    
     
     var workingDirectory = new WPath('/');
 
@@ -250,7 +244,7 @@
       var file = new WFile({
         'path': filepath,
         'blob': new WFileBlob({
-          'name': filename,
+          'name': filepath.getLastToken(),
           'content': originalText + text
         })
       });
@@ -259,7 +253,9 @@
     }
     function ReadTextFile(obj){
       var filename = obj.filename;
-      var filepath = workingDirectory.concat(filename)
+      var filepath = workingDirectory.concat(filename);
+      
+      WLocalDrive.locatePath(filepath);
       
       var isFile = WLocalDrive.isFile(filepath);
       if(!isFile){
@@ -274,20 +270,8 @@
       return text;
     }
     
-    WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));
-    
-    
     wshell.setParser(parser);
     wshell.start();
-    
-  }
-  
-  function Inspect(wpath){
-    console.log(wpath.getPathAsString());
-    console.log(WLocalDrive.exists(wpath))
-    console.log(WLocalDrive.isDirectory(wpath))
-    console.log(WLocalDrive.isFile(wpath))
-    console.log(WLocalDrive.locatePath(wpath));
   }
   
 })();

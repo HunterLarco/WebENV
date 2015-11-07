@@ -165,6 +165,7 @@
     
     (function Constructor(funcmap){
       SaveIndexedFunctions(funcmap);
+      WLogger.inform('WScripting initialized with commands:', funcList.join(', '));
     }).apply(self, arguments);
   }
   
