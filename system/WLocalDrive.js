@@ -23,13 +23,14 @@
     
     function WriteFile(wfile){
       var path = wfile.getPath();
+      var enclosingPath = path.concat('..');
       
-      if(!IsDirectory(path)){
-        WLogger.error('Not a directory:', path.getPathAsString());
+      if(!IsDirectory(enclosingPath)){
+        WLogger.error('Not a directory:', enclosingPath.getPathAsString());
         throw 'Not a directory';
       }
       
-      var dir = LocatePath(path);
+      var dir = LocatePath(enclosingPath);
       dir.setChild(wfile.getFileBlob().getFileName(), wfile);
       
       return wfile;

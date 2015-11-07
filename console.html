@@ -56,8 +56,6 @@
         'worker': DoMakeDir,
         'description': 'Makes directories'
       },
-      // p ~ fills in directories
-      // v ~ is verbose in filling in directories
       
       {
         'command': 'ls',
@@ -66,7 +64,6 @@
         'worker': ListDir,
         'description': 'Lists files and folder in the current directory'
       },
-      // all ~ uses ls recursively to list everything
       
       {
         'command': 'cd',
@@ -98,6 +95,22 @@
         'flags': '',
         'worker': PrintDirectory,
         'description': 'Prints the current directory'
+      },
+      
+      {
+        'command': 'write',
+        'args': 'filename text',
+        'flags': 'append',
+        'worker': WriteTextFile,
+        'description': 'Writes text to a file'
+      },
+      
+      {
+        'command': 'read',
+        'args': 'filename',
+        'flags': '',
+        'worker': ReadTextFile,
+        'description': 'Reads a text file'
       }
       
     ]);
@@ -138,6 +151,11 @@
       var wpath = workingDirectory.concat(obj.dirname);
       var dir = WLocalDrive.locatePath(wpath);
       
+      if(dir instanceof WFile){
+        WLogger.error('Not a directory:', wpath.getPathAsString());
+        throw 'Not a directory';
+      }
+      
       if(obj.all){
         var output = ListNestedDir(dir);
         if(output.length === 0)
@@ -151,7 +169,7 @@
       
       for(var i=0,child; child=children[i++];){
         if (child instanceof WDirectory) output.push(child.getDirectoryName());
-        else return output.push(child.getFileBlob().getFileName());
+        else output.push(child.getFileBlob().getFileName());
       }
       
       if(output.length === 0)
@@ -159,6 +177,8 @@
       return output.join('\n');
     }
     function ListNestedDir(dir){
+      if(dir instanceof WFile) return [];
+      
       var children = dir.getChildren();
       var output = [];
       
@@ -174,7 +194,11 @@
       var pathString = obj.path;
       var newDirectory = workingDirectory.concat(pathString);
 
-      WLocalDrive.locatePath(newDirectory);
+      if(!WLocalDrive.isDirectory(newDirectory)){
+        WLogger.error('Not a directory:', newDirectory.getPathAsString());
+        throw 'Not a directory';
+      }
+      
       workingDirectory = newDirectory;
       
       wshell.setMountString(workingDirectory);
@@ -207,6 +231,47 @@
     
     function PrintDirectory(){
       return workingDirectory.getPathAsString();
+    }
+    
+    function WriteTextFile(obj){
+      var filename = obj.filename;
+      var filepath = workingDirectory.concat(filename)
+      var text = obj.text;
+      
+      var shouldAppend = obj.append;
+      var originalText = '';
+      
+      if(shouldAppend){
+        var fileText = ReadTextFile({ filename: filename });
+        fileText += '\n';
+        originalText = fileText;
+      }
+      
+      var file = new WFile({
+        'path': filepath,
+        'blob': new WFileBlob({
+          'name': filename,
+          'content': originalText + text
+        })
+      });
+      
+      WLocalDrive.writeFile(file);
+    }
+    function ReadTextFile(obj){
+      var filename = obj.filename;
+      var filepath = workingDirectory.concat(filename)
+      
+      var isFile = WLocalDrive.isFile(filepath);
+      if(!isFile){
+        WLogger.error('Not a file:', filepath.getPathAsString());
+        throw 'Not a file';
+      }
+      
+      var file = WLocalDrive.locatePath(filepath);
+      var blob = file.getFileBlob();
+      var text = blob.getContent();
+      
+      return text;
     }
     
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));

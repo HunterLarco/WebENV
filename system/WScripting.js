@@ -58,7 +58,8 @@
       for(var i=0,flag; flag=flags[i++];)
         parameters[flag] = false;
       
-      for(var i=1,part; part=partsList[i++];){
+      for(var i=1; i<partsList.length; i++){
+        var part = partsList[i];
         if(part[0] === '-'){
           if(part.slice(0,2) === '--') part = part.slice(2);
           else part = part.slice(1);
@@ -142,6 +143,7 @@
       
       if(lastSection.length !== 0)
         split.push(lastSection);
+    
       return split;
     }
     
