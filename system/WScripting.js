@@ -47,12 +47,10 @@
       
       var funcSpec = GetCommandSpec(command);
       
-      var worker = funcSpec.worker;
-      var args = funcSpec.args;
-      var argdefaults = funcSpec.argdefaults;
+      var args = funcSpec.getArguments();
+      var argdefaults = funcSpec.getDefaultArguments();
       var usableArgs = args.concat([]);
-      var kwargs = funcSpec.kwargs;
-      var flags = funcSpec.flags;
+      var flags = funcSpec.getFlags();
       
       var parameters = {}
       
@@ -60,28 +58,12 @@
       for(var i=0,flag; flag=flags[i++];)
         parameters[flag] = false;
       
-      // kwargs are optional and default to null
-      for(var i=0,kwarg; kwarg=kwargs[i++];)
-        parameters[kwarg] = null;
-      
       for(var i=1,part; part=partsList[i++];){
         if(part[0] === '-'){
           if(part.slice(0,2) === '--') part = part.slice(2);
           else part = part.slice(1);
           
-          if(kwargs.indexOf(part) !== -1){
-            if(parameters[part] !== null){
-              WLogger.warn('Dupicate keyword arguments cannot be resolved:', part);
-              throw 'Dupicate keyword arguments cannot be resolved';
-            }
-            
-            if(i >= partsList.length || partsList[i][0] === '-'){
-              WLogger.warn('Keyword argument must preceed value pair:', part);
-              throw 'Keyword argument must preceed value pair';
-            }
-            
-            parameters[part] = partsList[i++];
-          }else if(flags.indexOf(part) !== -1){
+          if(flags.indexOf(part) !== -1){
             parameters[part] = true;
           }else if(args.indexOf(part) !== -1){
             var flaggedArgIndex = args.indexOf(part);
@@ -124,8 +106,11 @@
         }
       }
       
-      return worker(parameters);
+      return funcSpec.callWorker(parameters);
     }
+    
+    
+    
     function SplitSequence(sequence){
       var split = [];
       
@@ -162,35 +147,16 @@
     
     function SaveIndexedFunctions(funcmap){
       for(var i=0,func; func=funcmap[i++];){
-        var command = func.command;
-        
-        if(indexedFuncSpec[command] !== undefined){
-          WLogger.warn('Unable to index duplicate command:', command);
-          throw 'Unable to index duplicate command.';
+        try{
+          var command = new WShellCommand(func);
+        }catch(e){
+          WLogger.error('Unknown error loading WShellCommand:', func.command);
+          throw 'Unknown error loading WShellCommand';
         }
         
-        var args = func.args.length == 0 ? [] : func.args.split(' ');
-        var argdefaults = {};
-        var kwargs = func.kwargs.length == 0 ? [] : func.kwargs.split(' ');
-        var flags = func.flags.length == 0 ? [] : func.flags.split(' ');
-        var worker = func.worker;
-        
-        args = args.map(function(arg){
-          var argMap = arg.match(/([^\[]+)(?:\[([^\]]*)\])?/);
-          var argName = argMap[1];
-          var argDefault = argMap[2];
-          argdefaults[argName] = argDefault;
-          return argName;
-        });
-        
-        funcList.push(command);
-        indexedFuncSpec[command] = {
-          args: args,
-          argdefaults: argdefaults,
-          flags: flags,
-          kwargs: kwargs,
-          worker: worker
-        }
+        var commandName = command.getCommandName();
+        indexedFuncSpec[commandName] = command;
+        funcList.push(commandName)
       }
     }
     

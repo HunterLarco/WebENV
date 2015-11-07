@@ -9,6 +9,8 @@
   left:0px;
   right:0px;
   bottom:0px;
+  
+  background:rgb(15,15,15);
 }
 
 </style>
@@ -50,9 +52,9 @@
       {
         'command': 'mkdir',
         'args': 'dirname',
-        'kwargs': '',
         'flags': 'fill verbose',
-        'worker': DoMakeDir
+        'worker': DoMakeDir,
+        'description': 'Makes directories'
       },
       // p ~ fills in directories
       // v ~ is verbose in filling in directories
@@ -60,34 +62,42 @@
       {
         'command': 'ls',
         'args': 'dirname[/]',
-        'kwargs': '',
         'flags': 'all',
-        'worker': ListDir
+        'worker': ListDir,
+        'description': 'Lists files and folder in the current directory'
       },
       // all ~ uses ls recursively to list everything
       
       {
         'command': 'cd',
         'args': 'path',
-        'kwargs': '',
         'flags': '',
-        'worker': CurrentDirectory
+        'worker': CurrentDirectory,
+        'description': 'Changes the current directory'
       },
       
       {
         'command': 'help',
         'args': 'command[]',
-        'kwargs': '',
         'flags': '',
-        'worker': CommandInfo
+        'worker': CommandInfo,
+        'description': 'Prints the command specs for a given command'
       },
       
       {
         'command': 'clear',
         'args': '',
-        'kwargs': '',
         'flags': '',
-        'worker': ClearShell
+        'worker': ClearShell,
+        'description': 'Clears the shell'
+      },
+      
+      {
+        'command': 'pwd',
+        'args': '',
+        'flags': '',
+        'worker': PrintDirectory,
+        'description': 'Prints the current directory'
       }
       
     ]);
@@ -176,46 +186,9 @@
       if(command.length === 0)
         return PrintAllCommands();
       
-      var spec = wshell.getParser().getCommandSpec(command);
-      
-      var args = spec.args;
-      var argdefaults = spec.argdefaults;
-      var kwargs = spec.kwargs;
-      var flags = spec.flags;
-      
-      var response = '';
-      
-      response += 'Required Arguments\n';
-      for(var i=0,arg; arg=args[i++];){
-        response += '\t' + arg;
-        var defaultarg = argdefaults[arg];
-        if(defaultarg !== undefined)
-          response += '\n\t\tdefault_value = "' + defaultarg + '"';
-        response += '\n';
-      }
-      if(args.length === 0)
-        response += '\tNo required arguments\n';
-      response += '\n';
-      
-      response += 'Keyword Arguments (optionals)\n';
-      for(var i=0,kwarg; kwarg=kwargs[i++];){
-        response += '\t' + kwarg;
-        response += '\t\tdefault_value = None';
-        response += '\n';
-      }
-      if(kwargs.length === 0)
-        response += '\tNo keyword arguments\n';
-      response += '\n';
-      
-      response += 'Flags\n';
-      for(var i=0,flag; flag=flags[i++];){
-        response += '\t' + flag;
-        response += '\n';
-      }
-      if(flags.length === 0)
-        response += '\tNo flags\n';
-      
-      return response;
+      var parser = wshell.getParser();
+      var commandSpec = parser.getCommandSpec(command)
+      return commandSpec.getHelpString();
     }
     function PrintAllCommands(){
       var commands = wshell.getParser().getCommands();
@@ -230,6 +203,10 @@
     
     function ClearShell(){
       wshell.clear();
+    }
+    
+    function PrintDirectory(){
+      return workingDirectory.getPathAsString();
     }
     
     WLogger.inform('WScripting initialized with commands:', parser.getCommands().join(', '));

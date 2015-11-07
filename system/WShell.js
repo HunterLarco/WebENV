@@ -350,6 +350,8 @@
       
       LoadGUI();
       BindLogger();
+      
+      WLogger.inform('WShell bound to WLogger.');
     }).apply(self, arguments);
   }
   

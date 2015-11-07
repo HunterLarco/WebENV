@@ -43,6 +43,8 @@
       }
       hasLaunched = true;
       
+      WLogger.inform('Launching BOOTLOADER');
+      
       for(var i=0,lib; lib=packages[i++];)
         RequireLib(lib);
       

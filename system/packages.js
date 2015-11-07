@@ -41,6 +41,12 @@ PACKAGES = [
     'script': 'system/WShell.js',
     'description': 'A shell interface for WScripting',
     'requires': ['system/WShell.css']
+  },
+  
+  {
+    'identifier': 'WShellCommand',
+    'script': 'system/WShellCommand.js',
+    'description': 'A wrapper for WShell commands'
   }
   
 ]
