@@ -5,7 +5,7 @@
     var undefined;
     
     
-    var MOUNTSTRING = 'console:~/ guest$ ';
+    var MOUNTSTRING = 'console:/ guest$ ';
     
     var frame;
     var shellWindow;
@@ -31,12 +31,22 @@
     var originalMemoryValue;
     
     
+    self.setMountString = SetMountString;
+    self.getMountString = GetMountString;
+    
     self.setParser = SetParser;
     self.getParser = GetParser;
     
     self.clear = Clear;
     self.start = Start;
     
+    
+    function SetMountString(wpath){
+      MOUNTSTRING = 'console:' + (wpath.getLastToken() || '/') + ' guest$ ';
+    }
+    function GetMountString(){
+      return MOUNTSTRING;
+    }
     
     function SetParser(_parser){
       var old = parser;

@@ -61,7 +61,7 @@
       
       {
         'command': 'ls',
-        'args': 'dirname[/]',
+        'args': 'dirname[./]',
         'flags': 'all',
         'worker': ListDir,
         'description': 'Lists files and folder in the current directory'
@@ -106,7 +106,8 @@
     var workingDirectory = new WPath('/');
 
     function DoMakeDir(obj){
-      var path = workingDirectory.concat(obj.dirname);
+      var pathString = obj.dirname;
+      var path = workingDirectory.concat(pathString);
       
       if(obj.fill){
         MakeDirectoryWithFillin(path, obj.verbose);
@@ -171,13 +172,12 @@
     
     function CurrentDirectory(obj){
       var pathString = obj.path;
-      var newDirectory;
-      
-      if(pathString[0] === '/') newDirectory = new WPath(pathString);
-      else newDirectory = workingDirectory.concat(pathString);
-      
+      var newDirectory = workingDirectory.concat(pathString);
+
       WLocalDrive.locatePath(newDirectory);
       workingDirectory = newDirectory;
+      
+      wshell.setMountString(workingDirectory);
     }
     
     function CommandInfo(obj){
