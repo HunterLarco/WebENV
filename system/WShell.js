@@ -5,11 +5,12 @@
     var undefined;
     
     
-    var MOUNTSTRING = 'console:~/ guest$ ';
+    var MOUNTSTRING = 'console:/ guest$ ';
     
     var frame;
     var shellWindow;
     var lineWindow;
+    var inFocusLabel;
     
     var parser;
     
@@ -30,12 +31,22 @@
     var originalMemoryValue;
     
     
+    self.setMountString = SetMountString;
+    self.getMountString = GetMountString;
+    
     self.setParser = SetParser;
     self.getParser = GetParser;
     
     self.clear = Clear;
     self.start = Start;
     
+    
+    function SetMountString(wpath){
+      MOUNTSTRING = 'console:' + (wpath.getLastToken() || '/') + ' guest$ ';
+    }
+    function GetMountString(){
+      return MOUNTSTRING;
+    }
     
     function SetParser(_parser){
       var old = parser;
@@ -53,6 +64,8 @@
       ShowMountMessage();
       CreateInputBindings();
       CreateNewInputLine();
+      
+      shellWindow.focus();
     }
     
     
@@ -61,14 +74,14 @@
       var line = CreateElement('div', { 'class':'line' });
       
       line.appendChild(CreateElement('br'));
-      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '--------------------------------------------------------------------'));
+      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '----------------------------------------------------------------------'));
       line.appendChild(CreateElement('br'));
       
-      var mountString = document.createTextNode('Welcome to WebENV! If you haven\'t been here type help to get started');
+      var mountString = document.createTextNode('Welcome to WebENV! If you haven\'t been here type \'help\' to get started');
       line.appendChild(mountString);
       
       line.appendChild(CreateElement('br'));
-      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '--------------------------------------------------------------------'));
+      line.appendChild(CreateElement('span', { 'class':'systemmount' }, '----------------------------------------------------------------------'));
       line.appendChild(CreateElement('br'));
       line.appendChild(CreateElement('br'));
       
@@ -84,10 +97,12 @@
     
     // focus listeners
     function OnFocus(){
-      console.log('focus')
+      inFocusLabel.innerHTML = 'in focus';
+      ShowCursor();
     }
     function OnBlur(){
-      console.log('blur')
+      inFocusLabel.innerHTML = 'out of focus';
+      HideCursor();
     }
     
     // dealing with input
@@ -139,6 +154,8 @@
     
     // cursor things
     function MoveCursor(direction){
+      if(cursorElem === undefined) return;
+      
       var newCursorIndex = cursorIndex + direction;
       
       if(newCursorIndex < 0) return;
@@ -148,24 +165,43 @@
       UpdateCursorPosition();
     }
     function UpdateCursorPosition(){
+      if(cursorElem === undefined) return;
+      
       var cursor = currentLineValue.length - cursorIndex;
       var position = MOUNTSTRING.length + cursor;
       cursorElem.style.left = CURSORWIDTH * position;
       ResetCursorFlash();
     }
     function ResetCursorFlash(){
+      if(cursorElem === undefined) return;
+      
       clearInterval(cursorInterval);
       cursorFlashState = false;
       cursorInterval = setInterval(FlashCursor, CURSORFLASH);
       FlashCursor();
     }
     function FlashCursor(){
+      if(cursorElem === undefined) return;
+      
       cursorFlashState = !cursorFlashState;
       cursorElem.style.display = cursorFlashState ? 'block' : 'none';
     }
     function RemoveCursor(){
+      if(cursorElem === undefined) return;
       cursorElem.parentElement.removeChild(cursorElem);
     }
+    function ShowCursor(){
+      if(cursorElem === undefined) return;
+      ResetCursorFlash();
+    }
+    function HideCursor(){
+      if(cursorElem === undefined) return;
+      
+      clearInterval(cursorInterval);
+      cursorFlashState = true;
+      FlashCursor();
+    }
+    
     function SetCommandFromMemory(direction){
       var newMemoryIndex = memoryIndex + direction;
       
@@ -296,7 +332,11 @@
       shellWindow = CreateElement('div', { 'class':'wshell' });
       lineWindow = CreateElement('div', { 'class':'padding' });
       
+      inFocusLabel = CreateElement('div', { 'class':'infocus' });
+      OnBlur();
+      
       shellWindow.appendChild(lineWindow);
+      shellWindow.appendChild(inFocusLabel);
       frame.appendChild(shellWindow);
     }
     function CreateElement(elemType, attributes, innerHTML){
@@ -320,6 +360,8 @@
       
       LoadGUI();
       BindLogger();
+      
+      WLogger.inform('WShell bound to WLogger.');
     }).apply(self, arguments);
   }
   

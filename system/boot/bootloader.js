@@ -43,6 +43,8 @@
       }
       hasLaunched = true;
       
+      WLogger.inform('Launching BOOTLOADER');
+      
       for(var i=0,lib; lib=packages[i++];)
         RequireLib(lib);
       
@@ -101,6 +103,9 @@
       return library;
     }
     function DidFinishLaunch(){
+      var libraryList = libmanager.getIdentifierList();
+      WLogger.inform('ENV Launched with Libraries:', libraryList.join(', '));
+      
       if(window.didBootLaunch !== undefined)
         setTimeout(window.didBootLaunch, 0);
     }

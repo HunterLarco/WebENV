@@ -1,4 +1,6 @@
 .wshell{
+  position:relative;
+  
   height:100%;
   width:100%;
   
@@ -20,6 +22,18 @@
 }
 .wshell .padding{
   padding:8px;
+}
+
+.wshell .infocus{
+  position:absolute;
+  top:0px;
+  right:0px;
+  
+  margin:10px;
+  
+  color:rgb(102,102,102);
+  text-transform:uppercase;
+  font-size:12px;
 }
 
 .wshell .line{

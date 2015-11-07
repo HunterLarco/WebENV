@@ -19,6 +19,8 @@
     
     
     function Concat(relativePath){
+      if(relativePath[0] === '/')
+        return new WPath(relativePath);
       return new WPath(pathString + '/' + relativePath);
     }
     function GetSubPaths(){
