@@ -5,6 +5,7 @@
     var undefined;
     
     
+    var filename;
     var title;
     var extension;
     var content;
@@ -26,7 +27,7 @@
       return extension;
     }
     function GetFileName(){
-      return title + '.' + extension;
+      return filename;
     }
     
     
@@ -39,6 +40,15 @@
       
       var extensionIndex = obj.name.indexOf('.');
       
+      if(extensionIndex === -1){
+        filename = obj.name;
+        title = obj.name;
+        extension = '';
+        content = obj.content;
+        return;
+      }
+      
+      filename = obj.name;
       title = obj.name.slice(0, extensionIndex);
       extension = obj.name.slice(extensionIndex+1);
       content = obj.content;
