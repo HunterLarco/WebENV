@@ -9,7 +9,7 @@
 <body>
 
 
-<div class=''>
+<div>
 
 
 <script>
@@ -27,11 +27,55 @@
     
     // 5 bits for instruction 8 bits for data
     var instructions = [
-      0b0000000000010,
-      0b1000000000000,
-      0b1111111111111
+      // ~((((((5 + 2 - 4) * 2 / 3 * 5 % 4) << 4) >> 1) + 5) & 27 | 46) ^ 78 == 142
+      // Remember that the not is executed over 8 bits unsigned. So javascript will not
+      // get the same answer as expected, but the CPU generates the right answer!!
+      
+      0b0001000000101,
+      0b0001000000010,
+      0b0001100000100,
+      0b0010000000010,
+      0b0010100000011,
+      0b0010000000101,
+      0b0011000000100,
+      0b0100000000100,
+      0b0100100000001,
+      0b0001000000101,
+      0b0101000011011,
+      0b0101100101110,
+      0b0110000000000,
+      0b0110101001110,
+      
+      // Stores the current value into RAM address 10000000
+      // And then loads it again
+      
+      0b0000110000000,
+      0b0000010000000,
+      
+      // Jump over the end execution instruction
+      
+      0b0111000010010,
+      0b1111100000000,
+      
+      // Add 5 (now value is 147)
+      
+      0b0001000000101,
+      
+      // Add 1 until == 180 (do while)
+      // then jump to the final end execution line
+      
+      // add 1
+      // compare to 155
+      // if == 155 jump to line 23
+      // jump to line 19
+      
+      0b0001000000001,
+      0b0011110011011,
+      0b1000000010111,
+      0b0111000010011,
+      
+      0b1111100000000
     ];
-    
     
     
     
@@ -149,13 +193,25 @@
     
     ALU.A.connect(TempRegister.OUTPUT);
     ALU.B.connect(Accumulator.OUTPUT);
-    ALU.OUTPUT.connect(dataBus);
     ALU.FLAGS.connect(FlagsRegister.INPUT);
     
-    control.ENABLEALU(ALU.ENABLE);
     control.ALUCTL.connect(ALU.CTL);
     
     
+    
+
+
+
+
+    var TempALUOutput = new Register(8);
+
+    TempALUOutput.INPUT.connect(ALU.OUTPUT);
+    TempALUOutput.OUTPUT.connect(dataBus);
+
+    control.ALUTEMPSET(TempALUOutput.SET);
+    control.ALUTEMPENABLE(TempALUOutput.ENABLE);
+
+
     
     
     
@@ -172,6 +228,7 @@
       console.log('ACCUM   ~', Accumulator.repr());
       console.log('FLAGS   ~', FlagsRegister.repr());
       console.log('ALU     ~', ALU.repr());
+      console.log('ALU OUT ~', TempALUOutput.repr());
       console.log('INCR    ~', Incrementor.repr());
     }
     window.REPR = REPR;
@@ -185,7 +242,7 @@
       if(clockWire.status()) clockWire.off(window);
       else clockWire.on(window);
     }
-    window.setInterval(Clock, 20);
+    window.setInterval(Clock, 5);
     
   }
   function RunTests(){
@@ -215,56 +272,70 @@ function ControlUnit(){
   
   var catalog = {
     Load: [
-      SetMemAddressToLoad,
+      DoLoad,
+      SetMemAddressToTemp,
       SetAccumulatorToMemAddress,
       CloseSetAccumulatorToMemAddress
     ],
     Store: [
-      
+      DoStore,
+      SetMemAddressToTemp,
+      LoadAccumulatorIntoRam,
+      CloseStorage
     ],
     Add: [
-      
+      SetAddOperator
     ],
     Sub: [
-      
+      SetSubOperator
     ],
     Mul: [
-      
+      SetMulOperator
     ],
     Div: [
-      
+      SetDivOperator
     ],
     Mod: [
-      
+      SetModOperator
     ],
     CMP: [
-      
+      SetCMPOperator
     ],
     LShift: [
-      
+      SetLShiftOperator
     ],
     RShift: [
-      
+      SetRShiftOperator
     ],
     And: [
-      
+      SetAndOperator
     ],
     Or: [
-      
+      SetOrOperator
     ],
     Not: [
-      
+      SetNotOperator
     ],
     Xor: [
-      
+      SetXorOperator
     ],
     Jump: [
-      
+      SetInstructionPointerToTemp,
+      DoCloseTempStorage,
+      JumpToNextInstruction
     ],
-    JumpIf: [
-      
+    JumpGT: [
+      DoJumpGT
     ],
-    End: []
+    JumpEQ: [
+      DoJumpEQ
+    ],
+    JumpLT: [
+      DoJumpLT
+    ],
+    End: [
+      DoEndExecution
+    ]
   };
   var microPrograms = {
     IncrementInstructionPointer: [
@@ -278,8 +349,9 @@ function ControlUnit(){
       CloseSetInstruction
     ],
     ExecuteALU: [
-      ExecuteALUOperator,
-      CloseALUOutput
+      SaveALUResultToRegister,
+      MoveALURegisterToAccumulator,
+      CloseAccumulatorALUSet
     ],
     ExecuteInstruction: [
       InterpretInstruction
@@ -288,7 +360,6 @@ function ControlUnit(){
   
   var executionStack = [];
   JumpToNextInstruction();
-  
   
   function SetupPins(){
     self.CLOCK = pins.init('CLOCK', OnClock);
@@ -323,7 +394,9 @@ function ControlUnit(){
       'ALUCTL2',
       'ALUCTL3'
     ]);
-    self.ENABLEALU = pins.init('ENABLEALU', Update);
+    
+    self.ALUTEMPSET = pins.init('ALUTEMPSET', Update);
+    self.ALUTEMPENABLE = pins.init('ALUTEMPENABLE', Update);
     
     self.ALUFLAG0 = pins.init('ALUFLAG0', Update);
     self.ALUFLAG1 = pins.init('ALUFLAG1', Update);
@@ -381,6 +454,10 @@ function ControlUnit(){
   function JumpToNextInstruction(){
     executionStack = executionStack.concat(microPrograms.LoadInstruction).concat(microPrograms.ExecuteInstruction);
   }
+  function ExecuteALUOperation(){
+    executionStack = executionStack.concat(microPrograms.ExecuteALU);
+    OnClock();
+  }
   
   
   
@@ -435,21 +512,27 @@ function ControlUnit(){
   }
   
   // Micro Program to execute ALU and save result in accumulator and save flags
-  function ExecuteALUOperator(){
+  function SaveALUResultToRegister(){
     console.group('Execute ALU');
-    console.info('Enabling ALU and moving result to accumulator (also saving flags to flags register)');
+    console.info('Moving ALU result to temporary ALU output register (also saving flags to flags register)');
     
-    pins.write('ENABLEALU', 1);
-    pins.write('SETACC', 1);
+    pins.write('ALUTEMPSET', 1);
     pins.write('SETFLAGS', 1);
   }
-  function CloseALUOutput(){
-    console.info('Closing ALU operation output pins');
-    console.groupEnd();
+  function MoveALURegisterToAccumulator(){
+    console.info('Moving temporary ALU output register data to accumulator');
     
     pins.write('SETFLAGS', 0);
+    pins.write('ALUTEMPSET', 0);
+    pins.write('ALUTEMPENABLE', 1);
+    pins.write('SETACC', 1);
+  }
+  function CloseAccumulatorALUSet(){
+    console.info('Closing closing transaction to accumulator from ALU temp output');
+    console.groupEnd();
+    
     pins.write('SETACC', 0);
-    pins.write('ENABLEALU', 0);
+    pins.write('ALUTEMPENABLE', 0);
   }
   
   // Micro Program to interpret the current instruction
@@ -472,8 +555,10 @@ function ControlUnit(){
       case 12: action = catalog.Not; break;
       case 13: action = catalog.Xor; break;
       case 14: action = catalog.Jump; break;
-      case 15: action = catalog.JumpIf; break;
-      case 16: action = catalog.End; break;
+      case 15: action = catalog.JumpGT; break;
+      case 16: action = catalog.JumpEQ; break;
+      case 17: action = catalog.JumpLT; break;
+      case 31: action = catalog.End; break;
       default: action = [];
     }
     
@@ -482,20 +567,25 @@ function ControlUnit(){
   }
   
   // LOAD command
-  function SetMemAddressToLoad(){
+  function DoLoad(){
     console.group('cmd: LOAD');
-    console.info('Set memory address register to load destination');
+    OnClock();
+  }
+  function SetMemAddressToTemp(){
+    console.info('Moving temp register to Memory Address register');
     
     // feed temp through (data from current instruction)
     alucontrol.write(13);
-    pins.write('ENABLEALU', 1);
+    pins.write('ALUTEMPENABLE', 1);
+    pins.write('ALUTEMPSET', 1);
     pins.write('SETMEM', 1);
   }
   function SetAccumulatorToMemAddress(){
     console.info('Set accumulator to memory at the memory address register');
     
     pins.write('SETMEM', 0);
-    pins.write('ENABLEALU', 0);
+    pins.write('ALUTEMPSET', 0);
+    pins.write('ALUTEMPENABLE', 0);
     pins.write('ENABLERAM', 1);
     pins.write('SETACC', 1);
   }
@@ -507,6 +597,246 @@ function ControlUnit(){
     pins.write('ENABLERAM', 0);
     
     IncrementToNextInstruction();
+  }
+  
+  // STORE command
+  function DoStore(){
+    console.group('cmd: STORE');
+    OnClock();
+  }
+  function LoadAccumulatorIntoRam(){
+    console.info('Moving accumulator value onto the bus and setting RAM');
+    
+    pins.write('SETMEM', 0);
+    
+    // feed accumulator through
+    alucontrol.write(12);
+    
+    pins.write('SETRAM', 1);
+  }
+  function CloseStorage(){
+    console.info('Closing storage -> Removing accumulator from bus and set flag on RAM');
+    console.groupEnd();
+    
+    pins.write('SETRAM', 0);
+    pins.write('ALUTEMPSET', 0);
+    pins.write('ALUTEMPENABLE', 0);
+    
+    IncrementToNextInstruction();
+  }
+  
+  // ADD command
+  function SetAddOperator(){
+    console.group('cmd: ADD');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(0);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // SUB command
+  function SetSubOperator(){
+    console.group('cmd: SUB');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(1);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // MUL command
+  function SetMulOperator(){
+    console.group('cmd: MUL');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(2);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // DIV command
+  function SetDivOperator(){
+    console.group('cmd: DIV');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(3);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // MOD command
+  function SetModOperator(){
+    console.group('cmd: MOD');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(4);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // CMP command
+  function SetCMPOperator(){
+    console.group('cmd: CMP');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(5);
+    pins.write('SETFLAGS', 1);
+    pins.write('SETFLAGS', 0);
+
+    IncrementToNextInstruction();
+  }
+  
+  // LShift command
+  function SetLShiftOperator(){
+    console.group('cmd: LSHIFT');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(6);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // RShift command
+  function SetRShiftOperator(){
+    console.group('cmd: RSHIFT');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(7);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // AND command
+  function SetAndOperator(){
+    console.group('cmd: AND');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(8);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // OR command
+  function SetOrOperator(){
+    console.group('cmd: OR');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(9);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // NOT command
+  function SetNotOperator(){
+    console.group('cmd: NOT');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(10);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // XOR command
+  function SetXorOperator(){
+    console.group('cmd: XOR');
+    console.info('Set ALU operator');
+    console.groupEnd();
+    
+    alucontrol.write(11);
+    
+    ExecuteALUOperation();
+    IncrementToNextInstruction();
+  }
+  
+  // Jump Command
+  function SetInstructionPointerToTemp(){
+    console.group('cmd: JUMP');
+    console.info('Moving temp register to instruction pointer register');
+    
+    // feed temp through (data from current instruction)
+    alucontrol.write(13);
+    pins.write('ALUTEMPENABLE', 1);
+    pins.write('ALUTEMPSET', 1);
+    pins.write('SETIP', 1);
+  }
+  function DoCloseTempStorage(){
+    console.info('Closing move to instruction pointer register');
+    console.groupEnd();
+    
+    pins.write('SETIP', 0);
+    pins.write('ALUTEMPSET', 0);
+    pins.write('ALUTEMPENABLE', 0);
+  }
+  
+  // DoJumpGT
+  function DoJumpGT(){
+    console.group('cmd: JumpGT');
+    console.info('If comparison flags show A > B then execute jump command');
+    console.groupEnd();
+    
+    if (pins.read('ALUFLAG5')){
+      executionStack = executionStack.concat(catalog.Jump);
+      OnClock();
+    }else{
+      IncrementToNextInstruction();
+    }
+  }
+  
+  // DoJumpEQ
+  function DoJumpEQ(){
+    console.group('cmd: JumpEQ');
+    console.info('If comparison flags show A == B then execute jump command');
+    console.groupEnd();
+    
+    if (pins.read('ALUFLAG4')){
+      executionStack = executionStack.concat(catalog.Jump);
+      OnClock();
+    }else{
+      IncrementToNextInstruction();
+    }
+  }
+  
+  // DoJumpLT
+  function DoJumpLT(){
+    console.group('cmd: JumpLT');
+    console.info('If comparison flags show A < B then execute jump command');
+    console.groupEnd();
+    
+    if (! pins.read('ALUFLAG5') && ! pins.read('ALUFLAG4')){
+      executionStack = executionStack.concat(catalog.Jump);
+      OnClock();
+    }else{
+      IncrementToNextInstruction();
+    }
+  }
+  
+  // END Command
+  function DoEndExecution(){
+    console.group('cmd: END');
+    console.info('Ending execution');
+    console.groupEnd();
   }
   
   
@@ -1152,21 +1482,17 @@ function ArithmeticLogicUnit(){
     self.FLAG5
   ]);
   
-  self.ENABLE = pins.init('ENABLE', Update);
-  
   
   self.repr = Repr;
   
   
   function Repr(){
-    return 'ALU(A: '+inputA.read()+'; B: '+inputB.read()+'; OUT: '+output.read()+'; F0: '+pins.read('FLAG0')+'; F1: '+pins.read('FLAG1')+'; F2: '+pins.read('FLAG2')+'; F3: '+pins.read('FLAG3')+'; F4: '+pins.read('FLAG4')+'; F5: '+pins.read('FLAG5')+'; CTL: '+controlPins.read()+'; enabled: '+pins.read('ENABLE')+')';
+    return 'ALU(A: '+inputA.read()+'; B: '+inputB.read()+'; OUT: '+output.read()+'; F0: '+pins.read('FLAG0')+'; F1: '+pins.read('FLAG1')+'; F2: '+pins.read('FLAG2')+'; F3: '+pins.read('FLAG3')+'; F4: '+pins.read('FLAG4')+'; F5: '+pins.read('FLAG5')+'; CTL: '+controlPins.read()+')';
   }
   
   
   function Update(){
     ClearFlags();
-    if(! pins.read('ENABLE'))
-      return output.write(0);
     
     switch(controlPins.read()){
       case  0: DoAdd(); break;
@@ -1250,8 +1576,14 @@ function ArithmeticLogicUnit(){
   function DoMod(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = B % A;
     
+    if (A === 0){
+      output.write(0);
+      pins.write('FLAG3', 1);
+      return;
+    }
+    
+    var out = B % A;
     WriteOutput(out);
   }
   function DoCMP(){
@@ -1286,9 +1618,9 @@ function ArithmeticLogicUnit(){
     WriteOutput(out);
   }
   function DoNot(){
-    var A = inputA.read();
+    var B = inputB.read();
     var filled = (1 << refBitSize) - 1;
-    var out = A ^ filled;
+    var out = B ^ filled;
     
     WriteOutput(out);
   }
@@ -1300,7 +1632,7 @@ function ArithmeticLogicUnit(){
     WriteOutput(out);
   }
   function DoAccPass(){
-    var B = inputA.read();
+    var B = inputB.read();
     WriteOutput(B);
   }
   function DoTMPPass(){
