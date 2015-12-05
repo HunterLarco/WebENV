@@ -688,7 +688,7 @@ function ControlUnit(){
   // CMP command
   function SetCMPOperator(){
     console.group('cmd: CMP');
-    console.info('Set ALU operator');
+    console.info('Update ALU flags using new ALU input without changing the accumulator');
     console.groupEnd();
     
     alucontrol.write(5);
