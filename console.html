@@ -26,56 +26,64 @@
     
     
     // 5 bits for instruction 8 bits for data
+    // var instructions = [
+    //    // ~((((((5 + 2 - 4) * 2 / 3 * 5 % 4) << 4) >> 1) + 5) & 27 | 46) ^ 78 == 142
+    //    // Remember that the not is executed over 8 bits unsigned. So javascript will not
+    //    // get the same answer as expected, but the CPU generates the right answer!!
+    //
+    //    0b0001000000101,
+    //    0b0001000000010,
+    //    0b0001100000100,
+    //    0b0010000000010,
+    //    0b0010100000011,
+    //    0b0010000000101,
+    //    0b0011000000100,
+    //    0b0100000000100,
+    //    0b0100100000001,
+    //    0b0001000000101,
+    //    0b0101000011011,
+    //    0b0101100101110,
+    //    0b0110000000000,
+    //    0b0110101001110,
+    //
+    //    // Stores the current value into RAM address 10000000
+    //    // And then loads it again
+    //
+    //    0b0000110000000,
+    //    0b0000010000000,
+    //
+    //    // Jump over the end execution instruction
+    //
+    //    0b0111000010010,
+    //    0b1111100000000,
+    //
+    //    // Add 5 (now value is 147)
+    //
+    //    0b0001000000101,
+    //
+    //    // Add 1 until == 180 (do while)
+    //    // then jump to the final end execution line
+    //
+    //    // add 1
+    //    // compare to 155
+    //    // if == 155 jump to line 23
+    //    // jump to line 19
+    //
+    //    0b0001000000001,
+    //    0b0011110011011,
+    //    0b1000000010111,
+    //    0b0111000010011,
+    //
+    //    0b1111100000000
+    //  ];
+   
     var instructions = [
-      // ~((((((5 + 2 - 4) * 2 / 3 * 5 % 4) << 4) >> 1) + 5) & 27 | 46) ^ 78 == 142
-      // Remember that the not is executed over 8 bits unsigned. So javascript will not
-      // get the same answer as expected, but the CPU generates the right answer!!
-      
-      0b0001000000101,
-      0b0001000000010,
-      0b0001100000100,
-      0b0010000000010,
-      0b0010100000011,
-      0b0010000000101,
-      0b0011000000100,
-      0b0100000000100,
-      0b0100100000001,
-      0b0001000000101,
-      0b0101000011011,
-      0b0101100101110,
-      0b0110000000000,
-      0b0110101001110,
-      
-      // Stores the current value into RAM address 10000000
-      // And then loads it again
-      
-      0b0000110000000,
-      0b0000010000000,
-      
-      // Jump over the end execution instruction
-      
-      0b0111000010010,
-      0b1111100000000,
-      
-      // Add 5 (now value is 147)
-      
-      0b0001000000101,
-      
-      // Add 1 until == 180 (do while)
-      // then jump to the final end execution line
-      
-      // add 1
-      // compare to 155
-      // if == 155 jump to line 23
-      // jump to line 19
-      
       0b0001000000001,
-      0b0011110011011,
-      0b1000000010111,
-      0b0111000010011,
-      
+      0b0011100000101,
+      0b1000000000100,
+      0b0111000000000,
       0b1111100000000
-    ];
+    ]
     
     
     
