@@ -21,6 +21,8 @@
     RunTests();
   }
   function RunTests(){
+    TestBus();
+    console.log('---------');
     TestIncrementUnit();
     console.log('---------');
     TestRegister();
@@ -33,6 +35,79 @@
 })();
 
 
+function Bus(){
+  var self = this;
+  var undefined;
+  
+  
+  var wires = [];
+  
+  
+  self.get = Get;
+  self.connect = Connect;
+  
+  
+  function Get(index){
+    if(index < 0 || index >= wires.length)
+      throw 'Bus index out of range';
+    return wires[index];
+  }
+  function Connect(pins){
+    if(pins.length != wires.length)
+      throw 'Desired connections do not match wires. Too many or too few';
+    
+    for(var i=0; i<wires.length; i++){
+      var wire = wires[i];
+      var pin = pins[i];
+      pin(wire);
+    }
+  }
+  
+  
+  (function Constructor(refBitSize){
+    if(refBitSize === undefined)
+      throw 'refBitSize required for Register initialization';
+    
+    for(var i=0; i<refBitSize; i++)
+      wires.push(new Wire());
+  }).apply(self, arguments);
+}
+function TestBus(){
+  var reg1 = new Register(4);
+  var reg2 = new Register(4);
+  var bus  = new Bus(4);
+  
+  var r1out0 = new Wire();
+  var r1out1 = new Wire();
+  var r1out2 = new Wire();
+  var r1out3 = new Wire();
+  
+  var wenable = new Wire();
+  var wset = new Wire();
+  
+  reg1.IN0(r1out0);
+  reg1.IN1(r1out1);
+  reg1.IN2(r1out2);
+  reg1.IN3(r1out3);
+  
+  reg1.ENABLE(wenable);
+  reg1.SET(wset);
+  
+  bus.connect([reg1.OUT0, reg1.OUT1, reg1.OUT2, reg1.OUT3]);
+  bus.connect([reg2.IN0, reg2.IN1, reg2.IN2, reg2.IN3]);
+  
+  console.log('reg1', reg1.repr());
+  console.log('reg2', reg2.repr());
+  
+  r1out0.on(window);
+  r1out2.on(window);
+  r1out3.on(window);
+  wenable.on(window);
+  wset.on(window);
+  
+  console.log('reg1', reg1.repr());
+  console.log('reg2', reg2.repr());
+}
 
 function PinGroup(){
   var self = this;
