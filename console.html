@@ -19,6 +19,7 @@
   
   function Init(){
     RunTests();
+    
   }
   function RunTests(){
     TestBus();
@@ -35,78 +36,34 @@
 })();
 
 
-function Bus(){
-  var self = this;
-  var undefined;
-  
-  
+
+function CreateBus(width){
   var wires = [];
-  
-  
-  self.get = Get;
-  self.connect = Connect;
-  
-  
-  function Get(index){
-    if(index < 0 || index >= wires.length)
-      throw 'Bus index out of range';
-    return wires[index];
-  }
-  function Connect(pins){
-    if(pins.length != wires.length)
-      throw 'Desired connections do not match wires. Too many or too few';
-    
-    for(var i=0; i<wires.length; i++){
-      var wire = wires[i];
-      var pin = pins[i];
-      pin(wire);
-    }
-  }
-  
-  
-  (function Constructor(refBitSize){
-    if(refBitSize === undefined)
-      throw 'refBitSize required for Register initialization';
-    
-    for(var i=0; i<refBitSize; i++)
-      wires.push(new Wire());
-  }).apply(self, arguments);
+  for(var i=0; i<width; i++)
+    wires.push(new Wire);
+  return new PinConnector(wires);
 }
 function TestBus(){
   var reg1 = new Register(4);
   var reg2 = new Register(4);
-  var bus  = new Bus(4);
+  var reg3 = new Register(4);
   
-  var r1out0 = new Wire();
-  var r1out1 = new Wire();
-  var r1out2 = new Wire();
-  var r1out3 = new Wire();
+  var bus = CreateBus(4);
   
-  var wenable = new Wire();
-  var wset = new Wire();
+  reg1.INPUT.connect(bus);
+  reg2.INPUT.connect(bus);
+  reg3.OUTPUT.connect(bus);
   
-  reg1.IN0(r1out0);
-  reg1.IN1(r1out1);
-  reg1.IN2(r1out2);
-  reg1.IN3(r1out3);
+  var alwaysOn = new Wire();
+  alwaysOn.on(window);
   
-  reg1.ENABLE(wenable);
-  reg1.SET(wset);
-  
-  bus.connect([reg1.OUT0, reg1.OUT1, reg1.OUT2, reg1.OUT3]);
-  bus.connect([reg2.IN0, reg2.IN1, reg2.IN2, reg2.IN3]);
+  reg3.IN2(alwaysOn);
+  reg3.SET(alwaysOn);
+  reg3.ENABLE(alwaysOn);
   
   console.log('reg1', reg1.repr());
   console.log('reg2', reg2.repr());
-  
-  r1out0.on(window);
-  r1out2.on(window);
-  r1out3.on(window);
-  wenable.on(window);
-  wset.on(window);
-  
-  console.log('reg1', reg1.repr());
-  console.log('reg2', reg2.repr());
+  console.log('reg3', reg3.repr());
 }
 
 function PinGroup(){
@@ -158,10 +115,14 @@ function PinGroup(){
     }
     
     function ConnectWire(wire){
+      var oldWire = pins[label];
+      
       pins[label].unlisten(listener);
       pins[label] = wire;
       pins[label].listen(listener);
-      listener();
+      
+      if(oldWire.status() != wire.status())
+        listener();
     }
     function ConnectPin(pin){
       var wire = new Wire();
@@ -271,6 +232,59 @@ function BinaryPinGroup(){
     pins = _pins;
   }).apply(self, arguments);
 }
+function PinConnector(){
+  var self = this;
+  var undefined;
+  
+  
+  var pins;
+  
+  
+  self.connect = Connect;
+  self.size = Size;
+  self.pins = Pins;
+  
+  
+  function Connect(){
+    var connectors = arguments;
+    
+    var pinsum = 0;
+    for(var i=0; i<connectors.length; i++){
+      var connector = connectors[i];
+      if (! (connector instanceof PinConnector))
+        throw 'PinConnector can only connect to other PinConnector instances';
+      pinsum += connector.size();
+    }
+    
+    if (pinsum != pins.length)
+      throw 'PinConnector cannot connect. Too many or too few pins provided';
+    
+    var pinIndex = 0;
+    for(var i=0; i<connectors.length; i++){
+      var connector = connectors[i];
+      var connectorPins = connector.pins();
+      for(var j=0; j<connectorPins.length; j++){
+        var connectorPin = connectorPins[j];
+        var pin = pins[pinIndex++];
+        pin(connectorPin);
+      }
+    }
+  }
+  function Size(){
+    return pins.length;
+  }
+  function Pins(){
+    return pins.concat([]);
+  }
+  
+  
+  (function Constructor(_pins){
+    if(_pins === undefined)
+      throw 'PinConnector requires pins to initialize';
+    
+    pins = _pins;
+  }).apply(self, arguments);
+}
 
 function IncrementUnit(){
   var self = this;
@@ -281,6 +295,8 @@ function IncrementUnit(){
   var inputGroup;
   var outputGroup;
   
+  
+  self.ENABLE = pins.init('ENABLE', Update);
   
   self.repr = Repr;
   
@@ -293,20 +309,28 @@ function IncrementUnit(){
   
   
   function Update(){
-    outputGroup.write(inputGroup.read() + 1);
+    if(pins.read('ENABLE'))
+      outputGroup.write(inputGroup.read() + 1);
+    else
+      outputGroup.write(0);
   }
   
   
   (function Constructor(refBitSize){
     if(refBitSize === undefined)
-      throw 'refBitSize required for Register initialization';
+      throw 'refBitSize required for IncrementUnit initialization';
     
     inputGroup = [];
     outputGroup = [];
     
+    var inputConnector = [];
+    var outputConnector = [];
+    
     for(var i=0; i<refBitSize; i++){
       self['IN'+i] = pins.init('IN'+i, Update);
       self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputConnector.push(self['IN'+i]);
+      outputConnector.push(self['OUT'+i]);
       inputGroup.push('IN'+i);
       outputGroup.push('OUT'+i);
     }
@@ -314,7 +338,8 @@ function IncrementUnit(){
     inputGroup = new BinaryPinGroup(pins, inputGroup);
     outputGroup = new BinaryPinGroup(pins, outputGroup);
     
-    Update();
+    self.INPUT = new PinConnector(inputConnector);
+    self.OUTPUT = new PinConnector(outputConnector);
   }).apply(self, arguments);
 }
 function TestIncrementUnit(){
@@ -330,15 +355,16 @@ function TestIncrementUnit(){
   var out2 = new Wire();
   var out3 = new Wire();
   
-  inc.IN0(in0);
-  inc.IN1(in1);
-  inc.IN2(in2);
-  inc.IN3(in3);
+  var wenable = new Wire();
+  wenable.on(window);
   
-  inc.OUT0(out0);
-  inc.OUT1(out1);
-  inc.OUT2(out2);
-  inc.OUT3(out3);
+  var input = new PinConnector([in0, in1, in2, in3]);
+  var output = new PinConnector([out0, out1, out2, out3]);
+  
+  inc.INPUT.connect(input);
+  inc.OUTPUT.connect(output);
+  
+  inc.ENABLE(wenable);
   
   console.log(inc.repr());
   
@@ -405,15 +431,23 @@ function Register(){
     inputGroup = [];
     outputGroup = [];
     
+    var inputConnector = [];
+    var outputConnector = [];
+    
     for(var i=0; i<refBitSize; i++){
       self['IN'+i] = pins.init('IN'+i, Update);
       self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputConnector.push(self['IN'+i]);
+      outputConnector.push(self['OUT'+i]);
       inputGroup.push('IN'+i);
       outputGroup.push('OUT'+i);
     }
     
     inputGroup = new BinaryPinGroup(pins, inputGroup);
     outputGroup = new BinaryPinGroup(pins, outputGroup);
+    
+    self.INPUT = new PinConnector(inputConnector);
+    self.OUTPUT = new PinConnector(outputConnector);
   }).apply(self, arguments);
 }
 function TestRegister(){
@@ -432,15 +466,11 @@ function TestRegister(){
   var wset = new Wire();
   var wenable = new Wire();
   
-  register.IN0(in0);
-  register.IN1(in1);
-  register.IN2(in2);
-  register.IN3(in3);
+  var input = new PinConnector([in0, in1, in2, in3]);
+  var output = new PinConnector([out0, out1, out2, out3]);
   
-  register.OUT0(out0);
-  register.OUT1(out1);
-  register.OUT2(out2);
-  register.OUT3(out3);
+  register.INPUT.connect(input);
+  register.OUTPUT.connect(output);
   
   register.SET(wset);
   register.ENABLE(wenable);
@@ -521,22 +551,35 @@ function RAM(){
   }
   
   
-  (function Constructor(refBitSize){
+  (function Constructor(refBitSize, instructions){
     if(refBitSize === undefined)
       throw 'refBitSize required for Register initialization';
+    if(instructions === undefined)
+      instructions = [];
+    
+    for(var i=0; i<instructions.length; i++)
+      mem[i] = instructions[i];
     
     inputGroup = [];
     outputGroup = [];
     
+    var inputConnector = [];
+    var outputConnector = [];
+    
     for(var i=0; i<refBitSize; i++){
       self['IN'+i] = pins.init('IN'+i, Update);
       self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputConnector.push(self['IN'+i]);
+      outputConnector.push(self['OUT'+i]);
       inputGroup.push('IN'+i);
       outputGroup.push('OUT'+i);
     }
     
     inputGroup = new BinaryPinGroup(pins, inputGroup);
     outputGroup = new BinaryPinGroup(pins, outputGroup);
+    
+    self.INPUT = new PinConnector(inputConnector);
+    self.OUTPUT = new PinConnector(outputConnector);
   }).apply(self, arguments);
 }
 function TestRAM(){
@@ -555,15 +598,11 @@ function TestRAM(){
   var wset = new Wire();
   var wenable = new Wire();
   
-  ram.IN0(in0);
-  ram.IN1(in1);
-  ram.IN2(in2);
-  ram.IN3(in3);
+  var input = new PinConnector([in0, in1, in2, in3]);
+  var output = new PinConnector([out0, out1, out2, out3]);
   
-  ram.OUT0(out0);
-  ram.OUT1(out1);
-  ram.OUT2(out2);
-  ram.OUT3(out3);
+  ram.INPUT.connect(input);
+  ram.OUTPUT.connect(output);
   
   ram.SET(wset);
   ram.ENABLE(wenable);
@@ -623,6 +662,14 @@ function ArithmeticLogicUnit(){
   self.FLAG3 = pins.init('FLAG3', Update);
   self.FLAG4 = pins.init('FLAG4', Update);
   self.FLAG5 = pins.init('FLAG5', Update);
+  self.FLAGS = new PinConnector([
+    self.FLAG0,
+    self.FLAG1,
+    self.FLAG2,
+    self.FLAG3,
+    self.FLAG4,
+    self.FLAG5
+  ]);
   
   
   self.repr = Repr;
@@ -785,7 +832,11 @@ function ArithmeticLogicUnit(){
     
     inputA = [];
     inputB = [];
-    output = []
+    output = [];
+    
+    var inputAConnector = [];
+    var inputBConnector = [];
+    var outputConnector = [];
     
     for(var i=0; i<refBitSize; i++){
       self['A'+i] = pins.init('A'+i, Update);
@@ -794,15 +845,26 @@ function ArithmeticLogicUnit(){
       inputA.push('A'+i);
       inputB.push('B'+i);
       output.push('OUT'+i);
+      inputAConnector.push(self['A'+i]);
+      inputBConnector.push(self['B'+i]);
+      outputConnector.push(self['OUT'+i]);
     }
     
     inputA = new BinaryPinGroup(pins, inputA);
     inputB = new BinaryPinGroup(pins, inputB);
     output = new BinaryPinGroup(pins, output);
     
-    for(var i=0,controlPin; controlPin=controlPins[i++];)
+    self.A = new PinConnector(inputAConnector);
+    self.B = new PinConnector(inputBConnector);
+    self.OUTPUT = new PinConnector(outputConnector);
+    
+    var controlPinsConnector = [];
+    for(var i=0,controlPin; controlPin=controlPins[i++];){
       self[controlPin] = pins.init(controlPin, Update);
+      controlPinsConnector.push(self[controlPin]);
+    }
     controlPins = new BinaryPinGroup(pins, controlPins);
+    self.CTL = new PinConnector(controlPinsConnector);
     
     Update();
   }).apply(self, arguments);
@@ -810,33 +872,44 @@ function ArithmeticLogicUnit(){
 function TestArithmeticLogicUnit(){
   var alu = new ArithmeticLogicUnit(3);
   
-  var ref = [];
-  var pins = new PinGroup(ref);
+  var a0 = new Wire();
+  var a1 = new Wire();
+  var a2 = new Wire();
   
-  pins.init('A0', new Function())(alu.A0);
-  pins.init('A1', new Function())(alu.A1);
-  pins.init('A2', new Function())(alu.A2);
+  var b0 = new Wire();
+  var b1 = new Wire();
+  var b2 = new Wire();
   
-  pins.init('B0', new Function())(alu.B0);
-  pins.init('B1', new Function())(alu.B1);
-  pins.init('B2', new Function())(alu.B2);
+  var c0 = new Wire();
+  var c1 = new Wire();
+  var c2 = new Wire();
+  var c3 = new Wire();
   
-  pins.init('C0', new Function())(alu.CTL0);
-  pins.init('C1', new Function())(alu.CTL1);
-  pins.init('C2', new Function())(alu.CTL2);
-  pins.init('C3', new Function())(alu.CTL3);
+  var A = new PinConnector([a0, a1, a2]);
+  var B = new PinConnector([b0, b1, b2]);
+  var CTL = new PinConnector([c0, c1, c2, c3]);
   
-  var A = new BinaryPinGroup(pins, ['A0', 'A1', 'A2']);
-  var B = new BinaryPinGroup(pins, ['B0', 'B1', 'B2']);
-  var CTL = new BinaryPinGroup(pins, ['C0', 'C1', 'C2', 'C3']);
+  alu.A.connect(A);
+  alu.B.connect(B);
+  alu.CTL.connect(CTL);
+  
+  console.log(alu.repr());
+  
+  // write 3 to CTL
+  c0.on(window);
+  c1.on(window);
+  
+  // write 5 to A
+  a0.on(window);
+  a2.on(window);
+  
+  // write 2 to B
+  b1.on(window);
   
   console.log(alu.repr());
   
-  CTL.write(3);
-  A.write(5);
-  B.write(2);
-  
-  console.log(alu.repr());
+  return;
+  // past this point haven't made necessary changes
   
   CTL.write(8);
   B.write(3);
