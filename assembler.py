@@ -23,9 +23,6 @@ instructions = [
 ]
 
 def ConvertAssemblyToByteCode(line):
-  if len(line) == 0:
-    return ''
-  
   currentInst = ''
   
   for instruction in instructions:
@@ -38,7 +35,17 @@ def ConvertAssemblyToByteCode(line):
     except:
       continue
   else:
-    raise Exception('Unknown Command')
+    try: 
+      number = int(line)
+    except:
+      raise Exception('Unknown Command')
+      
+    if number >= 1 << dataBits:
+      raise Exception('Number overflow')
+    if number < 0:
+      raise Exception('Positive integer required')
+    
+    return '{0:0{1}b}'.format(number, dataBits + instBits)
   
   _, code, hasparam = currentInst
   
@@ -50,12 +57,17 @@ def ConvertAssemblyToByteCode(line):
     number = int(number)
     if number >= 1 << dataBits:
       raise Exception('Parameter overflow')
+    if number < 0:
+      raise Exception('Positive integer required')
   
   return '{0:0{1}b}'.format((code << dataBits) | number, dataBits + instBits)
 
 
 
+
 with open('bytecode.txt', 'w') as bytecode:
+  output = []
+  
   with open('assembly.txt', 'r') as programf:
     program = programf.read()
     lines = program.split('\n')
@@ -64,11 +76,12 @@ with open('bytecode.txt', 'w') as bytecode:
       try:
         converted = ConvertAssemblyToByteCode(line)
         if len(converted) > 0:
-          bytecode.write(converted)
-          if lineNumber != len(lines) - 1:
-            bytecode.write('\n')
+          output.append(converted)
       except Exception as e:
-        print('Invalid Line Number: %s. Ignored' % (lineNumber+1))
+        print('Invalid Line Number: %s. %s' % (lineNumber+1, e))
+  
+  bytecode.write('\n'.join(output))
+
 
 print('Compilation Complete')
 
