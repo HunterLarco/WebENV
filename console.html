@@ -20,6 +20,15 @@
   function Init(){
     RunTests();
   }
+  function RunTests(){
+    TestIncrementUnit();
+    console.log('---------');
+    TestRegister();
+    console.log('---------');
+    TestRAM();
+    console.log('---------');
+    TestArithmeticLogicUnit();
+  }
   
 })();
 
@@ -67,10 +76,22 @@ function PinGroup(){
     
     pins[label] = new Wire();
   
-    return function SetWire(wire){
+    return function SetPin(obj){
+      if(obj instanceof Wire) return ConnectWire(obj);
+      else if(typeof obj === 'function') return ConnectPin(obj);
+      throw 'Unknown obj tried to connected to pin';
+    }
+    
+    function ConnectWire(wire){
       pins[label].unlisten(listener);
       pins[label] = wire;
       pins[label].listen(listener);
+      listener();
+    }
+    function ConnectPin(pin){
+      var wire = new Wire();
+      pin(wire);
+      ConnectWire(wire);
     }
   }
   
@@ -121,15 +142,152 @@ function PinGroup(){
     device = _device;
   }).apply(self, arguments);
 }
+function BinaryPinGroup(){
+  var self = this;
+  var undefined;
+  
+  
+  var pinGroup;
+  var pins;
+  
+  
+  self.pins = Pins;
+  
+  self.read = Read;
+  self.write = Write;
+  
+  
+  function Pins(){
+    return pins;
+  }
+  function Read(){
+    var groupValue = 0;
+    
+    for(var i=0; i<pins.length; i++){
+      var pin = pins[i];
+      var pinValue = pinGroup.read(pin);
+      groupValue |= pinValue << i;
+    }
+    
+    return groupValue;
+  }
+  // returns bool (true if overflow)
+  function Write(value){
+    if (value === undefined || typeof value != 'number' || value % 1 != 0 || value < 0)
+      throw 'BinaryPinGroup Write method requires a positive integer value';
+    
+    for(var i=0; i<pins.length; i++){
+      var pin = pins[i];
+      var pinValue = value & (1 << i);
+      pinGroup.write(pin, pinValue);
+    }
+    
+    return value >= (1 << pins.length);
+  }
+  
+  
+  (function Constructor(_pinGroup, _pins){
+    if(_pinGroup === undefined)
+      throw 'PinGroup required for BinaryPinGroup initialization.';
+    if(_pins === undefined)
+      throw 'Pins Array required for BinaryPinGroup initialization.';
+    
+    pinGroup = _pinGroup;
+    pins = _pins;
+  }).apply(self, arguments);
+}
+
+function IncrementUnit(){
+  var self = this;
+  var undefined;
+  
+  
+  var pins = new PinGroup(self);
+  var inputGroup;
+  var outputGroup;
+  
+  
+  self.repr = Repr;
+  
+  
+  function Repr(){
+    var input = inputGroup.read();
+    var output = outputGroup.read();
+    return 'IncrementUnit(in: '+input+'; out: '+output+')';
+  }
+  
+  
+  function Update(){
+    outputGroup.write(inputGroup.read() + 1);
+  }
+  
+  
+  (function Constructor(refBitSize){
+    if(refBitSize === undefined)
+      throw 'refBitSize required for Register initialization';
+    
+    inputGroup = [];
+    outputGroup = [];
+    
+    for(var i=0; i<refBitSize; i++){
+      self['IN'+i] = pins.init('IN'+i, Update);
+      self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputGroup.push('IN'+i);
+      outputGroup.push('OUT'+i);
+    }
+    
+    inputGroup = new BinaryPinGroup(pins, inputGroup);
+    outputGroup = new BinaryPinGroup(pins, outputGroup);
+    
+    Update();
+  }).apply(self, arguments);
+}
+function TestIncrementUnit(){
+  var inc = new IncrementUnit(4);
+  
+  var in0 = new Wire();
+  var in1 = new Wire();
+  var in2 = new Wire();
+  var in3 = new Wire();
+  
+  var out0 = new Wire();
+  var out1 = new Wire();
+  var out2 = new Wire();
+  var out3 = new Wire();
+  
+  inc.IN0(in0);
+  inc.IN1(in1);
+  inc.IN2(in2);
+  inc.IN3(in3);
+  
+  inc.OUT0(out0);
+  inc.OUT1(out1);
+  inc.OUT2(out2);
+  inc.OUT3(out3);
+  
+  console.log(inc.repr());
+  
+  in0.on(window);
+  in3.on(window);
+  
+  console.log(inc.repr());
+  
+  in1.on(window);
+  in2.on(window);
+  
+  console.log(inc.repr());
+}
 
 function Register(){
   var self = this;
+  var undefined;
   
   
-  var refBitSize;
-  var savedValue;
+  var savedValue = 0;
   
   var pins = new PinGroup(self);
+  var inputGroup;
+  var outputGroup;
   
   
   self.SET = pins.init('SET', Update);
@@ -139,7 +297,10 @@ function Register(){
   
   
   function Repr(){
-    return 'Register(in: '+GetInputValue()+'; out: '+GetOutputValue()+'; saved: '+savedValue+')';
+    var input = inputGroup.read();
+    var output = outputGroup.read();
+    var saved = savedValue;
+    return 'Register(in: '+input+'; out: '+output+'; saved: '+saved+')';
   }
   
   
@@ -152,43 +313,32 @@ function Register(){
       DoClearValue();
   }
   function DoSetValue(){
-    savedValue = GetInputValue();
+    savedValue = inputGroup.read();
   }
   function DoEnableValue(){
-    for(var i=0; i<refBitSize; i++)
-      pins.write('OUT'+i, savedValue[i]);
+    outputGroup.write(savedValue);
   }
   function DoClearValue(){
-    for(var i=0; i<refBitSize; i++)
-      pins.write('OUT'+i, 0);
-  }
-  
-  function GetInputValue(){
-    var inputByte = '';
-    
-    for(var i=0; i<refBitSize; i++)
-      inputByte += pins.read('IN'+i);
-    
-    return inputByte;
-  }
-  function GetOutputValue(){
-    var outputByte = '';
-    
-    for(var i=0; i<refBitSize; i++)
-      outputByte += pins.read('OUT'+i);
-    
-    return outputByte;
+    outputGroup.write(0);
   }
   
   
-  (function Constructor(_refBitSize){
-    refBitSize = _refBitSize;
-    savedValue = new Array(refBitSize+1).join('0');
+  (function Constructor(refBitSize){
+    if(refBitSize === undefined)
+      throw 'refBitSize required for Register initialization';
+    
+    inputGroup = [];
+    outputGroup = [];
     
     for(var i=0; i<refBitSize; i++){
       self['IN'+i] = pins.init('IN'+i, Update);
       self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputGroup.push('IN'+i);
+      outputGroup.push('OUT'+i);
     }
+    
+    inputGroup = new BinaryPinGroup(pins, inputGroup);
+    outputGroup = new BinaryPinGroup(pins, outputGroup);
   }).apply(self, arguments);
 }
 function TestRegister(){
@@ -257,11 +407,11 @@ function RAM(){
   var undefined;
   
   
-  var defaultValue;
-  var refBitSize;
   var mem = {};
   
   var pins = new PinGroup(self);
+  var inputGroup;
+  var outputGroup;
   
   
   self.SET = pins.init('SET', Update);
@@ -271,7 +421,7 @@ function RAM(){
   
   
   function Repr(){
-    return 'RAM(in: '+GetInputValue()+'; out: '+GetOutputValue()+')';
+    return 'RAM(in: '+inputGroup.read()+'; out: '+outputGroup.read()+')';
   }
   
   
@@ -282,47 +432,36 @@ function RAM(){
       DoEnable();
   }
   function DoEnable(){
-    var savedValue = mem[GetInputValue()];
+    var savedValue = mem[inputGroup.read()];
     if (savedValue === undefined)
-      savedValue = defaultValue;
+      savedValue = 0;
     
-    for(var i=0; i<refBitSize; i++)
-      pins.write('OUT'+i, savedValue[i]);
+    outputGroup.write(savedValue);
   }
   function DoSet(){
-    mem[GetInputValue()] = GetOutputValue();
+    mem[inputGroup.read()] = outputGroup.read();
   }
   function DoClearValue(){
-    for(var i=0; i<refBitSize; i++)
-      pins.write('OUT'+i, 0);
-  }
-  
-  function GetInputValue(){
-    var inputByte = '';
-    
-    for(var i=0; i<refBitSize; i++)
-      inputByte += pins.read('IN'+i);
-    
-    return inputByte;
-  }
-  function GetOutputValue(){
-    var outputByte = '';
-    
-    for(var i=0; i<refBitSize; i++)
-      outputByte += pins.read('OUT'+i);
-    
-    return outputByte;
+    outputGroup.write(0);
   }
   
   
-  (function Constructor(_refBitSize){
-    refBitSize = _refBitSize;
-    defaultValue = new Array(refBitSize+1).join('0');
+  (function Constructor(refBitSize){
+    if(refBitSize === undefined)
+      throw 'refBitSize required for Register initialization';
+    
+    inputGroup = [];
+    outputGroup = [];
     
     for(var i=0; i<refBitSize; i++){
       self['IN'+i] = pins.init('IN'+i, Update);
       self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputGroup.push('IN'+i);
+      outputGroup.push('OUT'+i);
     }
+    
+    inputGroup = new BinaryPinGroup(pins, inputGroup);
+    outputGroup = new BinaryPinGroup(pins, outputGroup);
   }).apply(self, arguments);
 }
 function TestRAM(){
@@ -392,60 +531,247 @@ function TestRAM(){
   console.log(ram.repr());
 }
 
-
-function RunTests(){
-  TestRegister();
-  console.log('---------');
-  TestRAM();
-  console.log('---------');
-  TestArithmeticLogicUnit();
-}
-
 function ArithmeticLogicUnit(){
   var self = this;
   
   
   var refBitSize;
-  var pins = {};
-  var InitPin = util.InitPin(pins, Update);
+  var pins = new PinGroup(self);
+  var inputA, inputB, output;
+  // controlPins will be replaced with a BinaryPinGroup
+  var controlPins = ['CTL0', 'CTL1', 'CTL2', 'CTL3'];
   
   
-  self.IN0 = InitPin('IN0');
-  self.IN1 = InitPin('IN1');
+  self.FLAG0 = pins.init('FLAG0', Update);
+  self.FLAG1 = pins.init('FLAG1', Update);
+  self.FLAG2 = pins.init('FLAG2', Update);
+  self.FLAG3 = pins.init('FLAG3', Update);
+  self.FLAG4 = pins.init('FLAG4', Update);
+  self.FLAG5 = pins.init('FLAG5', Update);
   
-  self.OUT0 = InitPin('OUT0');
-  
-  // A > B
-  // A == B
-  self.FLAG0 = InitPin('FLAG0');
-  self.FLAG1 = InitPin('FLAG1');
   
   self.repr = Repr;
   
   
   function Repr(){
-    return 'ALU(A: '+'N/A'+'; B: '+'N/A'+'; out: '+'N/A'+'; flag0: '+'N/A'+'; flag1: '+'N/A'+')';
+    return 'ALU(A: '+inputA.read()+'; B: '+inputB.read()+'; OUT: '+output.read()+'; F0: '+pins.read('FLAG0')+'; F1: '+pins.read('FLAG1')+'; F2: '+pins.read('FLAG2')+'; F3: '+pins.read('FLAG3')+'; F4: '+pins.read('FLAG4')+'; F5: '+pins.read('FLAG5')+'; CTL: '+controlPins.read()+')';
   }
   
   
   function Update(){
-    console.log('update');
+    ClearFlags();
+    
+    switch(controlPins.read()){
+      case  0: DoAdd(); break;
+      case  1: DoSub(); break;
+      case  2: DoMul(); break;
+      case  3: DoDiv(); break;
+      case  4: DoMod(); break;
+      case  5: DoCMP(); break;
+      case  6: DoLShift(); break;
+      case  7: DoRShift(); break;
+      case  8: DoAnd(); break;
+      case  9: DoOr(); break;
+      case 10: DoNot(); break;
+      case 11: DoXor(); break;
+      case 12: DoAccPass(); break;
+      case 13: DoTMPPass(); break;
+      case 14: break;
+      case 15: break;
+    }
+    
+    CalculateIndependentFlags();
+  }
+  function ClearFlags(){
+    pins.write('FLAG0', 0);
+    pins.write('FLAG1', 0);
+    pins.write('FLAG2', 0);
+    pins.write('FLAG3', 0);
+    pins.write('FLAG4', 0);
+    pins.write('FLAG5', 0);
+  }
+  function CalculateIndependentFlags(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var O = output.read();
+    
+    if (O === 0) pins.write('FLAG1', 1);
+    if (A  >  B) pins.write('FLAG5', 1);
+    if (A === B) pins.write('FLAG4', 1);
+  }
+  function WriteOutput(out){
+    if (output.write(out))
+      pins.write('FLAG0', 1);
+  }
+  
+  function DoAdd(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A + B;
+    
+    WriteOutput(out);
+  }
+  function DoSub(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = Math.abs(A - B);
+    
+    if (A - B < 0) pins.write('FLAG2', 1);
+    
+    WriteOutput(out);
+  }
+  function DoMul(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A * B;
+    
+    WriteOutput(out);
+  }
+  function DoDiv(){
+    var A = inputA.read();
+    var B = inputB.read();
+    
+    if (B === 0){
+      output.write(0);
+      pins.write('FLAG3', 1);
+      return;
+    }
+    
+    var out = Math.floor(A / B);
+    WriteOutput(out);
+  }
+  function DoMod(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A % B;
+    
+    WriteOutput(out);
+  }
+  function DoCMP(){
+    output.write(0);
+  }
+  function DoLShift(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A << B;
+    
+    WriteOutput(out);
+  }
+  function DoRShift(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A >> B;
+    
+    WriteOutput(out);
+  }
+  function DoAnd(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A & B;
+    
+    WriteOutput(out);
+  }
+  function DoOr(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A | B;
+    
+    WriteOutput(out);
+  }
+  function DoNot(){
+    var A = inputA.read();
+    var filled = (1 << refBitSize) - 1;
+    var out = A ^ filled;
+    
+    WriteOutput(out);
+  }
+  function DoXor(){
+    var A = inputA.read();
+    var B = inputB.read();
+    var out = A ^ B;
+    
+    WriteOutput(out);
+  }
+  function DoAccPass(){
+    var A = inputA.read();
+    WriteOutput(A);
+  }
+  function DoTMPPass(){
+    var B = inputB.read();
+    WriteOutput(B);
   }
   
   
   (function Constructor(_refBitSize){
+    if(_refBitSize === undefined)
+      throw 'refBitSize required for ALU initialization';
+    
     refBitSize = _refBitSize;
+    
+    inputA = [];
+    inputB = [];
+    output = []
+    
+    for(var i=0; i<refBitSize; i++){
+      self['A'+i] = pins.init('A'+i, Update);
+      self['B'+i] = pins.init('B'+i, Update);
+      self['OUT'+i] = pins.init('OUT'+i, Update);
+      inputA.push('A'+i);
+      inputB.push('B'+i);
+      output.push('OUT'+i);
+    }
+    
+    inputA = new BinaryPinGroup(pins, inputA);
+    inputB = new BinaryPinGroup(pins, inputB);
+    output = new BinaryPinGroup(pins, output);
+    
+    for(var i=0,controlPin; controlPin=controlPins[i++];)
+      self[controlPin] = pins.init(controlPin, Update);
+    controlPins = new BinaryPinGroup(pins, controlPins);
+    
+    Update();
   }).apply(self, arguments);
 }
 function TestArithmeticLogicUnit(){
-  var alu = new ArithmeticLogicUnit();
+  var alu = new ArithmeticLogicUnit(3);
   
-  var in0 = new Wire();
-  var in1 = new Wire();
+  var ref = [];
+  var pins = new PinGroup(ref);
+  
+  pins.init('A0', new Function())(alu.A0);
+  pins.init('A1', new Function())(alu.A1);
+  pins.init('A2', new Function())(alu.A2);
+  
+  pins.init('B0', new Function())(alu.B0);
+  pins.init('B1', new Function())(alu.B1);
+  pins.init('B2', new Function())(alu.B2);
+  
+  pins.init('C0', new Function())(alu.CTL0);
+  pins.init('C1', new Function())(alu.CTL1);
+  pins.init('C2', new Function())(alu.CTL2);
+  pins.init('C3', new Function())(alu.CTL3);
+  
+  var A = new BinaryPinGroup(pins, ['A0', 'A1', 'A2']);
+  var B = new BinaryPinGroup(pins, ['B0', 'B1', 'B2']);
+  var CTL = new BinaryPinGroup(pins, ['C0', 'C1', 'C2', 'C3']);
+  
+  console.log(alu.repr());
+  
+  CTL.write(3);
+  A.write(5);
+  B.write(2);
+  
+  console.log(alu.repr());
+  
+  CTL.write(8);
+  B.write(3);
+  
+  console.log(alu.repr());
+  
+  CTL.write(13);
   
   console.log(alu.repr());
 }
-
 
 function Wire(){
   var self = this;
