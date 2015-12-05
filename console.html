@@ -27,8 +27,9 @@
     
     // 5 bits for instruction 8 bits for data
     var instructions = [
-      0b0000000000000,
-      0b0001110000101
+      0b0000000000010,
+      0b1000000000000,
+      0b1111111111111
     ];
     
     
@@ -110,32 +111,81 @@
     
     
     
+    
+    
+    var TempRegister = new Register(8);
+    
+    TempRegister.INPUT.connect(dataBus);
+    TempRegister.ENABLE(alwaysOn);
+    
+    control.SETTMP(TempRegister.SET);
+    
+    
+    
+    
+    
+    var Accumulator = new Register(8);
+    
+    Accumulator.INPUT.connect(dataBus);
+    Accumulator.ENABLE(alwaysOn);
+    
+    control.SETACC(Accumulator.SET);
+    
+    
+    
+    
+    
+    
+    
+    var FlagsRegister = new Register(6);
+    
+    FlagsRegister.ENABLE(alwaysOn);
+    
+    control.ALUFLAGS.connect(FlagsRegister.OUTPUT);
+    control.SETFLAGS(FlagsRegister.SET);
+    
+    
+    var ALU = new ArithmeticLogicUnit(8);
+    
+    ALU.A.connect(TempRegister.OUTPUT);
+    ALU.B.connect(Accumulator.OUTPUT);
+    ALU.OUTPUT.connect(dataBus);
+    ALU.FLAGS.connect(FlagsRegister.INPUT);
+    
+    control.ENABLEALU(ALU.ENABLE);
+    control.ALUCTL.connect(ALU.CTL);
+    
+    
+    
+    
+    
+    
+    
+    
     function REPR(){
-      console.log('IP ', InstructionPointer.repr());
-      console.log('TMP', TempInstructionPointer.repr());
-      console.log('MEM', MemoryAddress.repr());
-      console.log('INS', Instruction.repr());
-      console.log('RAM', ram.repr());
+      console.log('IP      ~', InstructionPointer.repr());
+      console.log('TMP IP  ~', TempInstructionPointer.repr());
+      console.log('MEM AD  ~', MemoryAddress.repr());
+      console.log('INST    ~', Instruction.repr());
+      console.log('RAM     ~', ram.repr());
+      console.log('TMP ALU ~', TempRegister.repr());
+      console.log('ACCUM   ~', Accumulator.repr());
+      console.log('FLAGS   ~', FlagsRegister.repr());
+      console.log('ALU     ~', ALU.repr());
+      console.log('INCR    ~', Incrementor.repr());
     }
+    window.REPR = REPR;
     
     
     
-    Clock();
-    Clock();
-    Clock();
-    Clock();
-    Clock();
-    Clock();
-    REPR();
     
-    return;
     
     
     function Clock(){
       if(clockWire.status()) clockWire.off(window);
       else clockWire.on(window);
     }
-    window.setInterval(Clock, 250);
+    window.setInterval(Clock, 20);
     
   }
   function RunTests(){
@@ -163,7 +213,59 @@ function ControlUnit(){
   var instruction;
   var alucontrol;
   
-  var catalog = {}
+  var catalog = {
+    Load: [
+      SetMemAddressToLoad,
+      SetAccumulatorToMemAddress,
+      CloseSetAccumulatorToMemAddress
+    ],
+    Store: [
+      
+    ],
+    Add: [
+      
+    ],
+    Sub: [
+      
+    ],
+    Mul: [
+      
+    ],
+    Div: [
+      
+    ],
+    Mod: [
+      
+    ],
+    CMP: [
+      
+    ],
+    LShift: [
+      
+    ],
+    RShift: [
+      
+    ],
+    And: [
+      
+    ],
+    Or: [
+      
+    ],
+    Not: [
+      
+    ],
+    Xor: [
+      
+    ],
+    Jump: [
+      
+    ],
+    JumpIf: [
+      
+    ],
+    End: []
+  };
   var microPrograms = {
     IncrementInstructionPointer: [
       SetTempInstructionPointer,
@@ -174,8 +276,18 @@ function ControlUnit(){
       SetMemAddress,
       SetInstruction,
       CloseSetInstruction
+    ],
+    ExecuteALU: [
+      ExecuteALUOperator,
+      CloseALUOutput
+    ],
+    ExecuteInstruction: [
+      InterpretInstruction
     ]
-  }
+  };
+  
+  var executionStack = [];
+  JumpToNextInstruction();
   
   
   function SetupPins(){
@@ -199,6 +311,37 @@ function ControlUnit(){
     self.ALUCTL1 = pins.init('ALUCTL1', Update);
     self.ALUCTL2 = pins.init('ALUCTL2', Update);
     self.ALUCTL3 = pins.init('ALUCTL3', Update);
+    self.ALUCTL  = new PinConnector([
+      self.ALUCTL0,
+      self.ALUCTL1,
+      self.ALUCTL2,
+      self.ALUCTL3
+    ]);
+    alucontrol = new BinaryPinGroup(pins, [
+      'ALUCTL0',
+      'ALUCTL1',
+      'ALUCTL2',
+      'ALUCTL3'
+    ]);
+    self.ENABLEALU = pins.init('ENABLEALU', Update);
+    
+    self.ALUFLAG0 = pins.init('ALUFLAG0', Update);
+    self.ALUFLAG1 = pins.init('ALUFLAG1', Update);
+    self.ALUFLAG2 = pins.init('ALUFLAG2', Update);
+    self.ALUFLAG3 = pins.init('ALUFLAG3', Update);
+    self.ALUFLAG4 = pins.init('ALUFLAG4', Update);
+    self.ALUFLAG5 = pins.init('ALUFLAG5', Update);
+    self.ALUFLAGS = new PinConnector([
+      self.ALUFLAG0,
+      self.ALUFLAG1,
+      self.ALUFLAG2,
+      self.ALUFLAG3,
+      self.ALUFLAG4,
+      self.ALUFLAG5
+    ]);
+        
+    self.SETTMP = pins.init('SETTMP', Update);
+    self.SETACC = pins.init('SETACC', Update);
     
     self.INST0 = pins.init('INST0', Update);
     self.INST1 = pins.init('INST1', Update);
@@ -212,6 +355,13 @@ function ControlUnit(){
       self.INST3,
       self.INST4
     ]);
+    instruction = new BinaryPinGroup(pins, [
+      'INST0',
+      'INST1',
+      'INST2',
+      'INST3',
+      'INST4'
+    ]);
     
     alucontrol = new BinaryPinGroup(pins, ['ALUCTL0', 'ALUCTL1', 'ALUCTL2', 'ALUCTL3']);
     instruction = new BinaryPinGroup(pins, ['INST0', 'INST1', 'INST2', 'INST3', 'INST4']);
@@ -220,16 +370,23 @@ function ControlUnit(){
   
   function Update(){}
   
-  var i = 0;
   function OnClock(){
-    var program = microPrograms.IncrementInstructionPointer.concat(microPrograms.LoadInstruction);
-    
-    program[i++]();
+    var currentBlock = executionStack.shift();
+    if (currentBlock !== undefined)
+      currentBlock();
+  }
+  function IncrementToNextInstruction(){
+    executionStack = executionStack.concat(microPrograms.IncrementInstructionPointer).concat(microPrograms.LoadInstruction).concat(microPrograms.ExecuteInstruction);
+  }
+  function JumpToNextInstruction(){
+    executionStack = executionStack.concat(microPrograms.LoadInstruction).concat(microPrograms.ExecuteInstruction);
   }
   
   
   
+  // Micro Program to Increment Instruction Pointer
   function SetTempInstructionPointer(){
+    console.group('Increment Instruction Pointer');
     console.info('Set temporary instruction pointer');
     
     pins.write('ENABLEIP', 1);
@@ -238,37 +395,118 @@ function ControlUnit(){
   function IncrementSetInstructionPointer(){
     console.info('Set instruction pointer to incremented value');
     
-    pins.write('ENABLEIP', 0);
     pins.write('SETINCR', 0);
+    pins.write('ENABLEIP', 0);
     pins.write('ENABLEINCR', 1);
     pins.write('SETIP', 1);
   }
   function CloseIncrementInstructionPointer(){
     console.info('Close instruction pointer incrementation connections');
+    console.groupEnd();
     
     pins.write('SETIP', 0);
     pins.write('ENABLEINCR', 0);
   }
   
+  // Micro Program to load current instruction using address in instruction pointer register
   function SetMemAddress(){
+    console.group('Load Current Instruction');
     console.info('Set memory address register to instruction pointer');
     
     pins.write('ENABLEIP', 1);
     pins.write('SETMEM', 1);
   }
   function SetInstruction(){
-    console.info('Load next instruction from ram');
+    console.info('Load next instruction from ram (sets ALU temp register with data and instruction register)');
     
     pins.write('SETMEM', 0);
     pins.write('ENABLEIP', 0);
     pins.write('ENABLERAM', 1);
     pins.write('SETINST', 1);
+    pins.write('SETTMP', 1);
   }
   function CloseSetInstruction(){
     console.info('Close instruction feed from RAM (already in register)');
+    console.groupEnd();
     
+    pins.write('SETTMP', 0);
     pins.write('SETINST', 0);
     pins.write('ENABLERAM', 0);
+  }
+  
+  // Micro Program to execute ALU and save result in accumulator and save flags
+  function ExecuteALUOperator(){
+    console.group('Execute ALU');
+    console.info('Enabling ALU and moving result to accumulator (also saving flags to flags register)');
+    
+    pins.write('ENABLEALU', 1);
+    pins.write('SETACC', 1);
+    pins.write('SETFLAGS', 1);
+  }
+  function CloseALUOutput(){
+    console.info('Closing ALU operation output pins');
+    console.groupEnd();
+    
+    pins.write('SETFLAGS', 0);
+    pins.write('SETACC', 0);
+    pins.write('ENABLEALU', 0);
+  }
+  
+  // Micro Program to interpret the current instruction
+  function InterpretInstruction(){
+    var action;
+    
+    switch(instruction.read()){
+      case 0:  action = catalog.Load; break;
+      case 1:  action = catalog.Store; break;
+      case 2:  action = catalog.Add; break;
+      case 3:  action = catalog.Sub; break;
+      case 4:  action = catalog.Mul; break;
+      case 5:  action = catalog.Div; break;
+      case 6:  action = catalog.Mod; break;
+      case 7:  action = catalog.CMP; break;
+      case 8:  action = catalog.LShift; break;
+      case 9:  action = catalog.RShift; break;
+      case 10: action = catalog.And; break;
+      case 11: action = catalog.Or; break;
+      case 12: action = catalog.Not; break;
+      case 13: action = catalog.Xor; break;
+      case 14: action = catalog.Jump; break;
+      case 15: action = catalog.JumpIf; break;
+      case 16: action = catalog.End; break;
+      default: action = [];
+    }
+    
+    executionStack = executionStack.concat(action);
+    OnClock();
+  }
+  
+  // LOAD command
+  function SetMemAddressToLoad(){
+    console.group('cmd: LOAD');
+    console.info('Set memory address register to load destination');
+    
+    // feed temp through (data from current instruction)
+    alucontrol.write(13);
+    pins.write('ENABLEALU', 1);
+    pins.write('SETMEM', 1);
+  }
+  function SetAccumulatorToMemAddress(){
+    console.info('Set accumulator to memory at the memory address register');
+    
+    pins.write('SETMEM', 0);
+    pins.write('ENABLEALU', 0);
+    pins.write('ENABLERAM', 1);
+    pins.write('SETACC', 1);
+  }
+  function CloseSetAccumulatorToMemAddress(){
+    console.info('Close data feed from RAM');
+    console.groupEnd();
+
+    pins.write('SETACC', 0);
+    pins.write('ENABLERAM', 0);
+    
+    IncrementToNextInstruction();
   }
   
   
@@ -544,7 +782,7 @@ function IncrementUnit(){
   function Repr(){
     var input = inputGroup.read();
     var output = outputGroup.read();
-    return 'IncrementUnit(in: '+input+'; out: '+output+')';
+    return 'IncrementUnit(in: '+input+'; out: '+output+'; enabled: '+pins.read('ENABLE')+')';
   }
   
   
@@ -641,7 +879,7 @@ function Register(){
     var input = inputGroup.read();
     var output = outputGroup.read();
     var saved = savedValue;
-    return 'Register(in: '+input+'; out: '+output+'; saved: '+saved+')';
+    return 'Register(in: '+input+'; out: '+output+'; saved: '+saved+'; enabled: '+pins.read('ENABLE')+')';
   }
   
   
@@ -766,7 +1004,7 @@ function RAM(){
   
   
   function Repr(){
-    return 'RAM(in: '+inputGroup.read()+'; out: '+outputGroup.read()+')';
+    return 'RAM(in: '+inputGroup.read()+'; out: '+outputGroup.read()+'; enabled: '+pins.read('ENABLE')+')';
   }
   
   
@@ -899,12 +1137,12 @@ function ArithmeticLogicUnit(){
   var controlPins = ['CTL0', 'CTL1', 'CTL2', 'CTL3'];
   
   
-  self.FLAG0 = pins.init('FLAG0', Update);
-  self.FLAG1 = pins.init('FLAG1', Update);
-  self.FLAG2 = pins.init('FLAG2', Update);
-  self.FLAG3 = pins.init('FLAG3', Update);
-  self.FLAG4 = pins.init('FLAG4', Update);
-  self.FLAG5 = pins.init('FLAG5', Update);
+  self.FLAG0 = pins.init('FLAG0', new Function());
+  self.FLAG1 = pins.init('FLAG1', new Function());
+  self.FLAG2 = pins.init('FLAG2', new Function());
+  self.FLAG3 = pins.init('FLAG3', new Function());
+  self.FLAG4 = pins.init('FLAG4', new Function());
+  self.FLAG5 = pins.init('FLAG5', new Function());
   self.FLAGS = new PinConnector([
     self.FLAG0,
     self.FLAG1,
@@ -914,17 +1152,21 @@ function ArithmeticLogicUnit(){
     self.FLAG5
   ]);
   
+  self.ENABLE = pins.init('ENABLE', Update);
+  
   
   self.repr = Repr;
   
   
   function Repr(){
-    return 'ALU(A: '+inputA.read()+'; B: '+inputB.read()+'; OUT: '+output.read()+'; F0: '+pins.read('FLAG0')+'; F1: '+pins.read('FLAG1')+'; F2: '+pins.read('FLAG2')+'; F3: '+pins.read('FLAG3')+'; F4: '+pins.read('FLAG4')+'; F5: '+pins.read('FLAG5')+'; CTL: '+controlPins.read()+')';
+    return 'ALU(A: '+inputA.read()+'; B: '+inputB.read()+'; OUT: '+output.read()+'; F0: '+pins.read('FLAG0')+'; F1: '+pins.read('FLAG1')+'; F2: '+pins.read('FLAG2')+'; F3: '+pins.read('FLAG3')+'; F4: '+pins.read('FLAG4')+'; F5: '+pins.read('FLAG5')+'; CTL: '+controlPins.read()+'; enabled: '+pins.read('ENABLE')+')';
   }
   
   
   function Update(){
     ClearFlags();
+    if(! pins.read('ENABLE'))
+      return output.write(0);
     
     switch(controlPins.read()){
       case  0: DoAdd(); break;
@@ -972,23 +1214,23 @@ function ArithmeticLogicUnit(){
   function DoAdd(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A + B;
+    var out = B + A;
     
     WriteOutput(out);
   }
   function DoSub(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = Math.abs(A - B);
+    var out = Math.abs(B - A);
     
-    if (A - B < 0) pins.write('FLAG2', 1);
+    if (B - A < 0) pins.write('FLAG2', 1);
     
     WriteOutput(out);
   }
   function DoMul(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A * B;
+    var out = B * A;
     
     WriteOutput(out);
   }
@@ -996,19 +1238,19 @@ function ArithmeticLogicUnit(){
     var A = inputA.read();
     var B = inputB.read();
     
-    if (B === 0){
+    if (A === 0){
       output.write(0);
       pins.write('FLAG3', 1);
       return;
     }
     
-    var out = Math.floor(A / B);
+    var out = Math.floor(B / A);
     WriteOutput(out);
   }
   function DoMod(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A % B;
+    var out = B % A;
     
     WriteOutput(out);
   }
@@ -1018,28 +1260,28 @@ function ArithmeticLogicUnit(){
   function DoLShift(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A << B;
+    var out = B << A;
     
     WriteOutput(out);
   }
   function DoRShift(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A >> B;
+    var out = B >> A;
     
     WriteOutput(out);
   }
   function DoAnd(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A & B;
+    var out = B & A;
     
     WriteOutput(out);
   }
   function DoOr(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A | B;
+    var out = B | A;
     
     WriteOutput(out);
   }
@@ -1053,17 +1295,17 @@ function ArithmeticLogicUnit(){
   function DoXor(){
     var A = inputA.read();
     var B = inputB.read();
-    var out = A ^ B;
+    var out = B ^ A;
     
     WriteOutput(out);
   }
   function DoAccPass(){
-    var A = inputA.read();
-    WriteOutput(A);
+    var B = inputA.read();
+    WriteOutput(B);
   }
   function DoTMPPass(){
-    var B = inputB.read();
-    WriteOutput(B);
+    var A = inputA.read();
+    WriteOutput(A);
   }
   
   
