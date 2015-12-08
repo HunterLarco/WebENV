@@ -19,7 +19,7 @@ instructions = [
   ('JUMPGT',  15, True ),
   ('JUMPEQ',  16, True ),
   ('JUMPLT',  17, True ),
-  ('END'   , 31, False)
+  ('END'   ,  31, False)
 ]
 
 def ConvertAssemblyToByteCode(line):
