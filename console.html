@@ -2,14 +2,36 @@
 <head>
 <style>
 
+body{
+  padding:0px;
+  margin:0px;
+}
 
+.SerialDisplay{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:scroll;
+  
+  word-break:break-all;
+  word-wrap:break-word;
+  
+  font-family:Monospace;
+  font-size:14px;
+  line-height:14px;
+  
+  background:rgb(11,16,21);
+  color:rgb(17,216,91);
+  
+  padding:8px;
+}
 
 </style>
 </head>
 <body>
 
 
-<div>
+<div class='SerialDisplay'></div>
 
 
 <script>
@@ -24,66 +46,65 @@
     
     
     
-    
     // 5 bits for instruction 8 bits for data
-    // var instructions = [
-    //    // ~((((((5 + 2 - 4) * 2 / 3 * 5 % 4) << 4) >> 1) + 5) & 27 | 46) ^ 78 == 142
-    //    // Remember that the not is executed over 8 bits unsigned. So javascript will not
-    //    // get the same answer as expected, but the CPU generates the right answer!!
-    //
-    //    0b0001000000101,
-    //    0b0001000000010,
-    //    0b0001100000100,
-    //    0b0010000000010,
-    //    0b0010100000011,
-    //    0b0010000000101,
-    //    0b0011000000100,
-    //    0b0100000000100,
-    //    0b0100100000001,
-    //    0b0001000000101,
-    //    0b0101000011011,
-    //    0b0101100101110,
-    //    0b0110000000000,
-    //    0b0110101001110,
-    //
-    //    // Stores the current value into RAM address 10000000
-    //    // And then loads it again
-    //
-    //    0b0000110000000,
-    //    0b0000010000000,
-    //
-    //    // Jump over the end execution instruction
-    //
-    //    0b0111000010010,
-    //    0b1111100000000,
-    //
-    //    // Add 5 (now value is 147)
-    //
-    //    0b0001000000101,
-    //
-    //    // Add 1 until == 180 (do while)
-    //    // then jump to the final end execution line
-    //
-    //    // add 1
-    //    // compare to 155
-    //    // if == 155 jump to line 23
-    //    // jump to line 19
-    //
-    //    0b0001000000001,
-    //    0b0011110011011,
-    //    0b1000000010111,
-    //    0b0111000010011,
-    //
-    //    0b1111100000000
-    //  ];
-   
     var instructions = [
-      0b0001000000001,
-      0b0011100000101,
-      0b1000000000100,
-      0b0111000000000,
-      0b1111100000000
-    ]
+       // ~((((((5 + 2 - 4) * 2 / 3 * 5 % 4) << 4) >> 1) + 5) & 27 | 46) ^ 78 == 142
+       // Remember that the not is executed over 8 bits unsigned. So javascript will not
+       // get the same answer as expected, but the CPU generates the right answer!!
+
+       0b0001000000101,
+       0b0001000000010,
+       0b0001100000100,
+       0b0010000000010,
+       0b0010100000011,
+       0b0010000000101,
+       0b0011000000100,
+       0b0100000000100,
+       0b0100100000001,
+       0b0001000000101,
+       0b0101000011011,
+       0b0101100101110,
+       0b0110000000000,
+       0b0110101001110,
+
+       // Stores the current value into RAM address 10000000
+       // And then loads it again
+
+       0b0000110000000,
+       0b0000010000000,
+
+       // Jump over the end execution instruction
+
+       0b0111000010010,
+       0b1111100000000,
+
+       // Add 5 (now value is 147)
+
+       0b0001000000101,
+
+       // Add 1 until == 155 (do while)
+       // then jump to the final end execution line
+
+       // add 1
+       // compare to 155
+       // if == 155 jump to line 23
+       // jump to line 19
+
+       0b0001000000001,
+       0b0011110011011,
+       0b1000000010111,
+       0b0111000010011,
+
+       0b1111100000000
+     ];
+   
+    // var instructions = [
+    //   0b0111000000010,
+    //   0b0000000000011,
+    //   0b0000000000001,
+    //   0b0001000000010,
+    //   0b1111100000000
+    // ]
     
     
     
@@ -250,7 +271,7 @@
       if(clockWire.status()) clockWire.off(window);
       else clockWire.on(window);
     }
-    window.setInterval(Clock, 5);
+    window.setInterval(Clock, 50);
     
   }
   function RunTests(){
@@ -266,6 +287,200 @@
   }
   
 })();
+
+
+
+var display = new SerialDisplay();
+display.onUpdate = function(value){
+  document.querySelector('.SerialDisplay').innerHTML = value.replace(/\n/g, '\<br/>');
+}
+
+var wset = new Wire();
+var wclear = new Wire();
+
+var pins = new PinGroup(window);
+var inputConnector = new PinConnector([
+  pins.init('IN0', new Function()),
+  pins.init('IN1', new Function()),
+  pins.init('IN2', new Function()),
+  pins.init('IN3', new Function()),
+  pins.init('IN4', new Function()),
+  pins.init('IN5', new Function()),
+  pins.init('IN6', new Function()),
+  pins.init('IN7', new Function())
+]);
+var input = new BinaryPinGroup(pins, ['IN0', 'IN1', 'IN2', 'IN3', 'IN4', 'IN5', 'IN6', 'IN7']);
+
+display.SET(wset);
+display.CLEAR(wclear);
+display.INPUT.connect(inputConnector);
+
+input.write(4);
+wset.on(window);
+wset.off(window);
+
+input.write(0);
+wset.on(window);
+wset.off(window);
+
+input.write(50);
+wset.on(window);
+wset.off(window);
+
+
+
+
+function SerialDisplay(){
+  var self = this;
+  var undefined;
+  
+  
+  var pins = new PinGroup(self);
+  var input;
+  
+  var value = '';
+  const charCodes = [
+    '\n',
+    ' ',
+    'a',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
+    'g',
+    'h',
+    'i',
+    'j',
+    'k',
+    'l',
+    'm',
+    'n',
+    'o',
+    'p',
+    'q',
+    'r',
+    's',
+    't',
+    'u',
+    'v',
+    'w',
+    'x',
+    'y',
+    'z',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '!',
+    '@',
+    '#',
+    '$',
+    '%',
+    '^',
+    '&',
+    '*',
+    '(',
+    ')',
+    '-',
+    '_',
+    '=',
+    '+',
+    '[',
+    ']',
+    '|',
+    '{',
+    '}',
+    '\\',
+    ':',
+    ';',
+    '\'',
+    '"',
+    '<',
+    ',',
+    '>',
+    '.',
+    '?',
+    '/',
+    '~',
+    '`'
+  ];
+  
+  
+  self.CLEAR = pins.init('CLEAR', Update);
+  self.SET = pins.init('SET', Update);
+  
+  self.onUpdate = new Function();
+  
+  
+  function GetValue(){
+    return value;
+  }
+  
+  
+  function Update(){
+    if(pins.read('CLEAR'))
+      value = '';
+    else if(pins.read('SET'))
+      DoSet();
+    self.onUpdate(value);
+  }
+  function DoSet(){
+    var inputValue = input.read();
+    var char = charCodes[inputValue];
+    if (char === undefined) return;
+    value += char;
+  }
+  
+  
+  (function Constructor(){
+    var refBitSize = 8;
+    
+    input = [];
+    var inputConnector = [];
+
+    for(var i=0; i<refBitSize; i++){
+      self['IN'+i] = pins.init('IN'+i, Update);
+      inputConnector.push(self['IN'+i]);
+      input.push('IN'+i);
+    }
+    
+    input = new BinaryPinGroup(pins, input);
+    self.INPUT = new PinConnector(inputConnector);
+  }).apply(self, arguments);
+}
 
 
 
@@ -603,6 +818,7 @@ function ControlUnit(){
 
     pins.write('SETACC', 0);
     pins.write('ENABLERAM', 0);
+    
     
     IncrementToNextInstruction();
   }
