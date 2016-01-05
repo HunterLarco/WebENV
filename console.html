@@ -6,111 +6,136 @@ body{
   padding:0px;
   margin:0px;
   
-  background:rgb(232,232,232);
+  background:rgb(245,245,245);
+  color:rgb(40,40,40);
   
   font-size:0px;
-  font-family:helvetica;
+  font-family:helvetica, arial;
 }
 
-.visualizer-table{
-  display:table;
-  
-  width:100%;
-  height:100%;
-}
-.visualizer-table .editors{
-  display:table-cell;
-  height:100%;
-  
-  width:40%;
-  min-width:400px;
-  
-  background:rgb(255,255,255);
-}
-.visualizer-table .visualizer{
-  display:table-cell;
-  height:100%;
+.main{
+  margin:0px auto;
+  max-width:700px;
 }
 
-.editor{
-  display:inline-table;
-  width:100%;
+h1{
+  font-size:30px;
+  font-weight:bold;
+  text-align:center;
   
-  font-size:20px;
-  line-height:28px;
-  font-family:Monospace;
-  
+  margin:60px 0px;
   padding:0px;
-  margin:0px;
-  
-  color:rgb(51,51,51);
-  background:rgb(255,255,255);
 }
-.editor line{
+h2{
+  font-size:19px;
+  font-weight:bold;
+  text-transform:uppercase;
+  
+  margin:6px 0px;
+  padding:0px;
+}
+h2+p{
+  margin-top:0px;
+}
+p{
+  font-size:17px;
+  font-weight:300;
+  
+  margin:35px 0px;
+  padding:0px;
+}
+
+playground{
+  display:block;
+  position:relative;
+  
+  background:rgb(230,230,230);
+  font-family:'Cousine', helvetica;
+}
+playground table{
+  display:table;
+  width:100%;
+}
+playground line{
   display:table-row;
 }
-.editor line .number{
+playground line:first-of-type num{
+  padding-top:12px;
+}
+playground line:last-of-type num{
+  padding-bottom:12px;
+}
+playground line num{
   display:table-cell;
+  padding:0px 20px 0px 12px;
   width:1px;
   
-  padding-right:20px;
+  font-size:14px;
+  line-height:23px;
   
-  color:rgb(200,200,200);
+  background:rgb(238,238,238);
+  color:rgb(80,80,80);
 }
-.editor line .code{
+playground line text{
   display:table-cell;
-}
-.editor line .code label{
-  color:rgb(2,153,173);
-}
-.editor line .binary{
-  display:table-cell;
-  width:1px;
+  padding:0px 12px 0px 8px;
   
-  background:rgb(248,248,248);
+  font-size:16px;
+  line-height:23px;
+}
+
+playground .menu{
+  position:block;
+  
+  background:rgb(225,225,225);
+}
+playground .menu item{
+  display:inline-block;
+  vertical-align:top;
+  
+  font-size:12px;
+  padding:6px 12px;
+  
+  background:rgb(215,215,215);
+  border-right:1px solid rgb(225,225,225);
+  
+  cursor:pointer;
+}
+playground .menu item:hover{
+  background:rgb(202,202,202);
 }
 
 </style>
 
 <script src='core.js'></script>
+<link href='https://fonts.googleapis.com/css?family=Cousine:400,700' rel='stylesheet' type='text/css'>
 
 </head>
 <body>
 
 
-<div class='visualizer-table'>
-  <div class='editors'>
-    <div class='editor'>
-      
-      <line>
-        <span class='number'>0</span>
-        <span class='code'>ADD <label>1</label></span>
-        <span class='binary'>0001000000001</span>
-      </line>
-      <line>
-        <span class='number'>1</span>
-        <span class='code'>CMP <label>20</label></span>
-        <span class='binary'>0011100010100</span>
-      </line>
-      <line>
-        <span class='number'>2</span>
-        <span class='code'>JUMPEQ <label>4</label></span>
-        <span class='binary'>1000000000100</span>
-      </line>
-      <line>
-        <span class='number'>3</span>
-        <span class='code'>JUMP <label>0</label></span>
-        <span class='binary'>0111000000000</span>
-      </line>
-      <line>
-        <span class='number'>4</span>
-        <span class='code'>END</span>
-        <span class='binary'>1111100000000</span>
-      </line>
-      
+<div class='main'>
+  <h1>How does a computer really work?</h1>
+  <h2>assembly language</h2>
+  <p>Lets start with some basic (very basic) computer code</p>
+  <playground>
+    <div class='menu'>
+      <item>Run</item>
+      <item>Step Forward</item>
+      <item>Step Backward</item>
+      <item>Reset</item>
+      <item>View Catalog</item>
+      <item>View Simulation</item>
     </div>
-  </div>
-  <div class='visualizer'></div>
+    <table>
+      <line><num>1</num><text>ADD 1</text></line>
+      <line><num>2</num><text>CMP 20</text></line>
+      <line><num>3</num><text>JUMPEQ 4</text></line>
+      <line><num>4</num><text>JUMP 0</text></line>
+      <line><num>5</num><text>END</text><line>
+    </table>
+  </playground>
+  <p>What does this do exactly? Lets look at the parts. It adds 1, the compares that value to 20. If it is equal to 20 it ends the program, if not it repeats.</p>
 </div>
 
 
