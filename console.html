@@ -6,79 +6,41 @@ body{
   padding:0px;
   margin:0px;
   
-  background:rgb(248,248,248);
+  background:rgb(232,232,232);
   
   font-size:0px;
   font-family:helvetica;
 }
 
-.nav{
-  background:rgb(235,235,235);
-}
-.nav .icon{
-  display:inline-block;
-  vertical-align:top;
-  position:relative;
+.visualizer-table{
+  display:table;
   
-  background:rgb(96,125,139);
-  color:rgb(255,255,255);
-  font-size:16px;
-  
-  padding:14px 26px;
-}
-.nav .icon:after{
-  display:block !important;
-  background-image:url(./images/triangleIcon.svg) !important;
-}
-.nav .phase{
-  display:inline-block;
-  vertical-align:top;
-  position:relative;
-  
-  color:rgb(51,51,51);
-  font-size:16px;
-  
-  padding:14px 26px;
-  
-  cursor:pointer;
-}
-.nav .icon:after,
-.nav .phase:after{
-  content:'';
-  display:none;
-  
-  position:absolute;
-  top:0px;
-  left:100%;
-  z-index:1;
-  
+  width:100%;
   height:100%;
-  width:20px;
+}
+.visualizer-table .editors{
+  display:table-cell;
+  height:100%;
   
-  background:url(./images/triangle.svg);
-  background-size:100% 100%;
+  width:40%;
+  min-width:400px;
+  
+  background:rgb(255,255,255);
 }
-.nav .phase.complete,
-.nav .phase.progress{
-  background:rgb(208,208,208);
-}
-.nav .phase.progress:after{
-  display:block;
-}
-.nav .phase.progress + .phase,
-.nav .phase:nth-child(2){
-  padding-left:46px;
+.visualizer-table .visualizer{
+  display:table-cell;
+  height:100%;
 }
 
 .editor{
   display:inline-table;
-  width:15%;
+  width:100%;
   
   font-size:20px;
   line-height:28px;
   font-family:Monospace;
   
-  padding:50px;
+  padding:0px;
   margin:0px;
   
   color:rgb(51,51,51);
@@ -95,11 +57,17 @@ body{
   
   color:rgb(200,200,200);
 }
-.editor line .text{
+.editor line .code{
   display:table-cell;
 }
-.editor line .text label{
+.editor line .code label{
   color:rgb(2,153,173);
+}
+.editor line .binary{
+  display:table-cell;
+  width:1px;
+  
+  background:rgb(248,248,248);
 }
 
 </style>
@@ -110,58 +78,39 @@ body{
 <body>
 
 
-<div class='nav'>
-  <div class='icon'>WebENV Processor</div>
-  <div class='phase progress'>Assembly Code</div>
-  <div class='phase'>Machine Code</div>
-  <div class='phase'>Execution</div>
-</div>
-
-
-<div class='editor'>
-  <line>
-    <span class='number'>0</span>
-    <span class='text'>ADD <label>1</label></span>
-  </line>
-  <line>
-    <span class='number'>1</span>
-    <span class='text'>CMP <label>20</label></span>
-  </line>
-  <line>
-    <span class='number'>2</span>
-    <span class='text'>JUMPEQ <label>4</label></span>
-  </line>
-  <line>
-    <span class='number'>3</span>
-    <span class='text'>JUMP <label>0</label></span>
-  </line>
-  <line>
-    <span class='number'>4</span>
-    <span class='text'>END</span>
-  </line>
-</div>
-
-<div class='editor'>
-  <line>
-    <span class='number'>0</span>
-    <span class='text'>0001000000001</span>
-  </line>
-  <line>
-    <span class='number'>1</span>
-    <span class='text'>0011100010100</span>
-  </line>
-  <line>
-    <span class='number'>2</span>
-    <span class='text'>1000000000100</span>
-  </line>
-  <line>
-    <span class='number'>3</span>
-    <span class='text'>0111000000000</span>
-  </line>
-  <line>
-    <span class='number'>4</span>
-    <span class='text'>1111100000000</span>
-  </line>
+<div class='visualizer-table'>
+  <div class='editors'>
+    <div class='editor'>
+      
+      <line>
+        <span class='number'>0</span>
+        <span class='code'>ADD <label>1</label></span>
+        <span class='binary'>0001000000001</span>
+      </line>
+      <line>
+        <span class='number'>1</span>
+        <span class='code'>CMP <label>20</label></span>
+        <span class='binary'>0011100010100</span>
+      </line>
+      <line>
+        <span class='number'>2</span>
+        <span class='code'>JUMPEQ <label>4</label></span>
+        <span class='binary'>1000000000100</span>
+      </line>
+      <line>
+        <span class='number'>3</span>
+        <span class='code'>JUMP <label>0</label></span>
+        <span class='binary'>0111000000000</span>
+      </line>
+      <line>
+        <span class='number'>4</span>
+        <span class='code'>END</span>
+        <span class='binary'>1111100000000</span>
+      </line>
+      
+    </div>
+  </div>
+  <div class='visualizer'></div>
 </div>
 
 
