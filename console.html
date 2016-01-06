@@ -13,12 +13,14 @@ body{
   font-family:helvetica, arial;
 }
 
-.main{
+article{
+  display:block;
+  
   margin:0px auto;
   max-width:700px;
 }
 
-h1{
+article h1{
   font-size:30px;
   font-weight:bold;
   text-align:center;
@@ -26,7 +28,7 @@ h1{
   margin:60px 0px;
   padding:0px;
 }
-h2{
+article h2{
   font-size:19px;
   font-weight:bold;
   text-transform:uppercase;
@@ -34,10 +36,10 @@ h2{
   margin:6px 0px;
   padding:0px;
 }
-h2+p{
+article h2+p{
   margin-top:0px;
 }
-p{
+article p{
   font-size:17px;
   font-weight:300;
   
@@ -121,16 +123,73 @@ playground .menu item:hover{
   background:rgb(202,202,202);
 }
 
+simulator{
+  display:block;
+  
+  position:fixed;
+  top:0px;
+  left:0px;
+  width:100%;
+  height:100%;
+  
+  background:rgb(96,125,139);
+}
+
+simulator .close{
+  position:absolute;
+  top:0px;
+  right:0px;
+  
+  margin:20px;
+  
+  width:46px;
+  height:46px;
+  
+  opacity:0.8;
+  cursor:pointer;
+}
+simulator .close:hover{
+  opacity:1;
+}
+
+simulator .table{
+  display:table;
+  width:100%;
+  height:100%;
+}
+simulator .table .code{
+  display:table-row;
+  height:1px;
+  
+  background:rgb(245,245,245);
+}
+simulator .table .visual{
+  display:table-row;
+}
+
 </style>
 
-<!-- <script src='core.js'></script> -->
+<script src='./simulator/wire.js'></script>
+<script src='./simulator/pingroup.js'></script>
+<script src='./simulator/pinconnector.js'></script>
+<script src='./simulator/binarypingroup.js'></script>
+<script src='./simulator/register.js'></script>
+<script src='./simulator/ram.js'></script>
+<script src='./simulator/incrementor.js'></script>
+<script src='./simulator/controlunit.js'></script>
+<script src='./simulator/bus.js'></script>
+<script src='./simulator/alu.js'></script>
+
+<script src='./playgrounds/scripts/catalog.js'></script>
+<script src='./playgrounds/scripts/interpreter.js'></script>
+
 <link href='https://fonts.googleapis.com/css?family=Cousine:400,700' rel='stylesheet' type='text/css'>
 
 </head>
 <body>
 
 
-<div class='main'>
+<article>
   <h1>How does a computer really work?</h1>
   <h2>assembly language</h2>
   <p>Lets start with some basic (very basic) computer code</p>
@@ -144,41 +203,50 @@ playground .menu item:hover{
   </playground>
   
   <p>What does this do exactly? Lets look at the parts. It adds 1, the compares that value to 20. If it is equal to 20 it ends the program, if not it repeats.</p>
-</div>
+</article>
+
+
+<simulator>
+  <img class='close' src='./simulator/images/icons/close.png'/>
+  
+  <div class='table'>
+    <div class='visual'>
+      
+    </div>
+    <div class='code'>
+      <playground>
+        <line>ADD 1</line>
+        <line>CMP 20</line>
+        <line>JUMPEQ 4</line>
+        <line>JUMP 0</line>
+        <line>END</line>
+      </playground>
+    </div>
+  </div>
+</simulator>
 
 
 <script>
 (function(){
   
-  var CATALOG = {
-    LOAD   : {param:true , code: 0},
-    STORE  : {param:true , code: 1},
-    ADD    : {param:true , code: 2},
-    SUB    : {param:true , code: 3},
-    MUL    : {param:true , code: 4},
-    DIV    : {param:true , code: 5},
-    MOD    : {param:true , code: 6},
-    CMP    : {param:true , code: 7},
-    LSHIFT : {param:true , code: 8},
-    RSHIFT : {param:true , code: 9},
-    AND    : {param:true , code:10},
-    OR     : {param:true , code:11},
-    NOT    : {param:true , code:12},
-    XOR    : {param:true , code:13},
-    JUMP   : {param:true , code:14},
-    JUMPGT : {param:true , code:15},
-    JUMPLT : {param:true , code:16},
-    JUMPEQ : {param:true , code:17},
-    END    : {param:false, code:31}
-  };
-  
   window.addEventListener('load', Init);
   function Init(){
-    FormPlayground(document.querySelector('playground'));
+    FormAllPlaygrounds();
+    
+    // var simulator = new Simulator('ADD 1\nCMP 20\nJUMPEQ 4\nJUMP 0\nEND');
+    // simulator.addEventListener('clock', function(){
+      // console.log(simulator.getAccumulator());
+    // });
+    // simulator.run(200);
   }
   
   
-  
+  function FormAllPlaygrounds(){
+    var playgrounds = document.querySelectorAll('playground');
+    
+    for(var i=0,playground; playground=playgrounds[i++];)
+      FormPlayground(playground);
+  }
   function FormPlayground(playground){
     var lines = GetCodeFromPlayground(playground);
     
@@ -187,9 +255,9 @@ playground .menu item:hover{
     
     FormButton(menu, 'Run', new Function());
     FormButton(menu, 'Step Forward', new Function());
-    FormButton(menu, 'Step Backward', new Function());
     FormButton(menu, 'Reset', new Function());
     FormButton(menu, 'View Catalog', new Function());
+    FormButton(menu, 'View Machine Code', new Function());
     FormButton(menu, 'View Simulation', new Function());
     
     var table = document.createElement('div');
@@ -237,74 +305,6 @@ playground .menu item:hover{
       code.push(lines[i].innerHTML);
     
     return code;
-  }
-  
-  
-  function InterpretLine(line, cb){
-    var invalidChar = line.match(/[^a-zA-Z0-9\s]/);
-    if(!!invalidChar){
-      var char = invalidChar[0];
-      var index = invalidChar.index+1;
-      return cb('Unexpected character \''+char+'\' at position '+index);
-    }
-    
-    // remove leading and trailing spaces
-    var stripped = line.replace(/^\s*(.*[^\s])\s*$/g, '$1');
-    // convert duplicate spaces into single spaces
-    stripped = stripped.replace(/\s+/g, ' ');
-    
-    // check that we have content by splitting into tokens
-    var tokens = stripped.split(' ');
-    if(tokens.length === 0) return;
-    
-    // split tokens into function name and parameters
-    var funct = tokens[0];
-    var params = tokens.slice(1);
-    
-    // check function exists
-    var definition = CATALOG[funct];
-    if (!definition)
-      return cb('Cannot interpret undefined function \''+funct+'\'');
-    
-    // check we have right amount of params
-    if(definition.param && params.length !== 1)
-      return cb('Expected 1 parameter but received '+params.length);
-    else if(!definition.param && params.length !== 0)
-      return cb('Expected 0 parameters but received '+params.length);
-    
-    // if param needed check it is a number that is an integer
-    // and fits in one unsigned byte
-    var param = 0;
-    if(definition.param){
-      if(!IsNumeric(params[0]))
-        return cb('Parameter must be numeric');
-      if(parseFloat(params[0]) !== parseInt(params[0]))
-        return cb('Parameter must be an integer');
-      param = parseInt(params[0]);
-      if(param > 0b11111111)
-        return cb('Parameter value may not exceed one byte');
-    }
-    
-    // convert command into bytecode
-    var machineCode = (definition.code << 8) + param;
-    return cb(null, machineCode);
-  }
-  function IsNumeric(n){
-    return !isNaN(parseFloat(n)) && isFinite(n);
-  }
-  
-  
-  function CodeSnippet(){
-    var undefined;
-    var self = this;
-    
-    
-    
-    
-    
-    (function Constructor(code){
-      InterpretCode(code);
-    }).apply(self, arguments);
   }
   
 })();
