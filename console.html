@@ -52,7 +52,7 @@ playground{
   background:rgb(230,230,230);
   font-family:'Cousine', helvetica;
 }
-playground table{
+playground .table{
   display:table;
   width:100%;
 }
@@ -76,12 +76,28 @@ playground line num{
   background:rgb(238,238,238);
   color:rgb(80,80,80);
 }
+playground line.error num{
+  color:rgb(233,30,99);
+}
 playground line text{
   display:table-cell;
   padding:0px 12px 0px 8px;
   
   font-size:16px;
   line-height:23px;
+}
+playground line error{
+  display:table-cell;
+  width:1px;
+  
+  font-size:14px;
+  line-height:23px;
+  white-space:nowrap;
+  text-align:right;
+  
+  padding-right:12px;
+  
+  color:rgb(233,30,99);
 }
 
 playground .menu{
@@ -107,7 +123,7 @@ playground .menu item:hover{
 
 </style>
 
-<script src='core.js'></script>
+<!-- <script src='core.js'></script> -->
 <link href='https://fonts.googleapis.com/css?family=Cousine:400,700' rel='stylesheet' type='text/css'>
 
 </head>
@@ -118,23 +134,15 @@ playground .menu item:hover{
   <h1>How does a computer really work?</h1>
   <h2>assembly language</h2>
   <p>Lets start with some basic (very basic) computer code</p>
+  
   <playground>
-    <div class='menu'>
-      <item>Run</item>
-      <item>Step Forward</item>
-      <item>Step Backward</item>
-      <item>Reset</item>
-      <item>View Catalog</item>
-      <item>View Simulation</item>
-    </div>
-    <table>
-      <line><num>1</num><text>ADD 1</text></line>
-      <line><num>2</num><text>CMP 20</text></line>
-      <line><num>3</num><text>JUMPEQ 4</text></line>
-      <line><num>4</num><text>JUMP 0</text></line>
-      <line><num>5</num><text>END</text><line>
-    </table>
+    <line>ADD 1</line>
+    <line>CMP 20</line>
+    <line>JUMPEQ 4</line>
+    <line>JUMP 0</line>
+    <line>END</line>
   </playground>
+  
   <p>What does this do exactly? Lets look at the parts. It adds 1, the compares that value to 20. If it is equal to 20 it ends the program, if not it repeats.</p>
 </div>
 
@@ -142,9 +150,161 @@ playground .menu item:hover{
 <script>
 (function(){
   
+  var CATALOG = {
+    LOAD   : {param:true , code: 0},
+    STORE  : {param:true , code: 1},
+    ADD    : {param:true , code: 2},
+    SUB    : {param:true , code: 3},
+    MUL    : {param:true , code: 4},
+    DIV    : {param:true , code: 5},
+    MOD    : {param:true , code: 6},
+    CMP    : {param:true , code: 7},
+    LSHIFT : {param:true , code: 8},
+    RSHIFT : {param:true , code: 9},
+    AND    : {param:true , code:10},
+    OR     : {param:true , code:11},
+    NOT    : {param:true , code:12},
+    XOR    : {param:true , code:13},
+    JUMP   : {param:true , code:14},
+    JUMPGT : {param:true , code:15},
+    JUMPLT : {param:true , code:16},
+    JUMPEQ : {param:true , code:17},
+    END    : {param:false, code:31}
+  };
+  
   window.addEventListener('load', Init);
   function Init(){
+    FormPlayground(document.querySelector('playground'));
+  }
+  
+  
+  
+  function FormPlayground(playground){
+    var lines = GetCodeFromPlayground(playground);
     
+    var menu = document.createElement('div');
+    menu.setAttribute('class', 'menu');
+    
+    FormButton(menu, 'Run', new Function());
+    FormButton(menu, 'Step Forward', new Function());
+    FormButton(menu, 'Step Backward', new Function());
+    FormButton(menu, 'Reset', new Function());
+    FormButton(menu, 'View Catalog', new Function());
+    FormButton(menu, 'View Simulation', new Function());
+    
+    var table = document.createElement('div');
+    table.setAttribute('class', 'table');
+    
+    var lines = GetCodeFromPlayground(playground);
+    for(var i=0; i<lines.length; i++){
+      var line = document.createElement('line');
+      var lineText = lines[i];
+      
+      var number = document.createElement('num');
+      number.innerHTML = i+1;
+      
+      var text = document.createElement('text');
+      text.innerHTML = lineText;
+      
+      var error = document.createElement('error');
+      InterpretLine(lineText, function(err){
+        if(!err) return;
+        error.innerHTML = err;
+        line.setAttribute('class', 'error');
+      });
+      
+      line.appendChild(number);
+      line.appendChild(text);
+      line.appendChild(error);
+      table.appendChild(line);
+    }
+    
+    playground.innerHTML = '';
+    playground.appendChild(menu);
+    playground.appendChild(table);
+  }
+  function FormButton(menu, title, listener){
+    var item = document.createElement('item');
+    item.innerHTML = title;
+    item.addEventListener('click', listener);
+    menu.appendChild(item);
+  }
+  function GetCodeFromPlayground(playground){
+    var lines = playground.querySelectorAll('line');
+    var code = [];
+    
+    for(var i=0; i<lines.length; i++)
+      code.push(lines[i].innerHTML);
+    
+    return code;
+  }
+  
+  
+  function InterpretLine(line, cb){
+    var invalidChar = line.match(/[^a-zA-Z0-9\s]/);
+    if(!!invalidChar){
+      var char = invalidChar[0];
+      var index = invalidChar.index+1;
+      return cb('Unexpected character \''+char+'\' at position '+index);
+    }
+    
+    // remove leading and trailing spaces
+    var stripped = line.replace(/^\s*(.*[^\s])\s*$/g, '$1');
+    // convert duplicate spaces into single spaces
+    stripped = stripped.replace(/\s+/g, ' ');
+    
+    // check that we have content by splitting into tokens
+    var tokens = stripped.split(' ');
+    if(tokens.length === 0) return;
+    
+    // split tokens into function name and parameters
+    var funct = tokens[0];
+    var params = tokens.slice(1);
+    
+    // check function exists
+    var definition = CATALOG[funct];
+    if (!definition)
+      return cb('Cannot interpret undefined function \''+funct+'\'');
+    
+    // check we have right amount of params
+    if(definition.param && params.length !== 1)
+      return cb('Expected 1 parameter but received '+params.length);
+    else if(!definition.param && params.length !== 0)
+      return cb('Expected 0 parameters but received '+params.length);
+    
+    // if param needed check it is a number that is an integer
+    // and fits in one unsigned byte
+    var param = 0;
+    if(definition.param){
+      if(!IsNumeric(params[0]))
+        return cb('Parameter must be numeric');
+      if(parseFloat(params[0]) !== parseInt(params[0]))
+        return cb('Parameter must be an integer');
+      param = parseInt(params[0]);
+      if(param > 0b11111111)
+        return cb('Parameter value may not exceed one byte');
+    }
+    
+    // convert command into bytecode
+    var machineCode = (definition.code << 8) + param;
+    return cb(null, machineCode);
+  }
+  function IsNumeric(n){
+    return !isNaN(parseFloat(n)) && isFinite(n);
+  }
+  
+  
+  function CodeSnippet(){
+    var undefined;
+    var self = this;
+    
+    
+    
+    
+    
+    (function Constructor(code){
+      InterpretCode(code);
+    }).apply(self, arguments);
   }
   
 })();
