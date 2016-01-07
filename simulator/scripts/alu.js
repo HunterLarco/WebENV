@@ -9,6 +9,11 @@ function ArithmeticLogicUnit(){
   var controlPins = ['CTL0', 'CTL1', 'CTL2', 'CTL3'];
   
   
+  self.reset = function Reset(){
+    pins.writeAll(0);
+  }
+  
+  
   self.FLAG0 = pins.init('FLAG0', new Function());
   self.FLAG1 = pins.init('FLAG1', new Function());
   self.FLAG2 = pins.init('FLAG2', new Function());

@@ -35,8 +35,10 @@ function Simulator(){
   self.step = Step;
   self.run = Run;
   self.stop = Stop;
+  self.reset = Reset;
   
   self.repr = REPR;
+  self.getExecutionLine = GetExecutionLine;
   
 
   function AddEventListener(event_name, funct){
@@ -67,6 +69,18 @@ function Simulator(){
   function Stop(){
     clearInterval(clockInterval);
   }
+  function Reset(){
+    control.reset();
+    InstructionPointer.reset();
+    Accumulator.reset();
+    FlagsRegister.reset();
+    TempRegister.reset();
+    TempInstructionPointer.reset();
+    TempALUOutput.reset();
+    ALU.reset();
+    Instruction.reset();
+    MemoryAddress.reset();
+  }
   
   function REPR(){
     var repr = '';
@@ -82,6 +96,9 @@ function Simulator(){
     repr += 'ALU OUT ~ ' + TempALUOutput.repr() + '\n';
     repr += 'INCR    ~ ' + Incrementor.repr();
     return repr;
+  }
+  function GetExecutionLine(){
+    return InstructionPointer.value();
   }
   
   
@@ -101,7 +118,7 @@ function Simulator(){
     clockWire = new Wire();
     
     // Control Unit
-    control = new ControlUnit(false);
+    control = new ControlUnit(true);
     control.CLOCK(clockWire);
     
     // Bus

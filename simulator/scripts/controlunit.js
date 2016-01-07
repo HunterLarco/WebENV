@@ -3,6 +3,13 @@ function ControlUnit(){
   var undefined;
   
   
+  self.reset = function Reset(){
+    executionStack = [];
+    JumpToNextInstruction();
+    pins.writeAll(0);
+  }
+  
+  
   var console = {
     groupEnd: window.console.groupEnd.bind(window.console),
     group: window.console.group.bind(window.console),

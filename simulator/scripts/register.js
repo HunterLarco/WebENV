@@ -13,14 +13,25 @@ function Register(){
   self.SET = pins.init('SET', Update);
   self.ENABLE = pins.init('ENABLE', Update);
   
-  self.repr = Repr;
+  self.reset = Reset;
   
+  self.repr = Repr;
+  self.value = GetValue;
+  
+  
+  function Reset(){
+    savedValue = 0;
+    pins.writeAll(0);
+  }
   
   function Repr(){
     var input = inputGroup.read();
     var output = outputGroup.read();
     var saved = savedValue;
     return 'Register(in: '+input+'; out: '+output+'; saved: '+saved+'; enabled: '+pins.read('ENABLE')+')';
+  }
+  function GetValue(){
+    return savedValue;
   }
   
   

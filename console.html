@@ -138,7 +138,7 @@ playground .menu item:hover{
 }
 
 simulator{
-  display:block;
+  display:none;
   
   position:fixed;
   top:0px;
@@ -148,23 +148,8 @@ simulator{
   
   background:rgb(96,125,139);
 }
-
-simulator .close{
-  position:absolute;
-  top:0px;
-  right:0px;
-  z-index:1;
-  
-  margin:20px;
-  
-  width:46px;
-  height:46px;
-  
-  opacity:0.8;
-  cursor:pointer;
-}
-simulator .close:hover{
-  opacity:1;
+simulator.shown{
+  display:block;
 }
 
 simulator .layout{
@@ -244,8 +229,6 @@ simulator .layout .visual img{
 
 
 <simulator>
-  <img class='close' src='./simulator/images/icons/close.png'/>
-  
   <div class='layout'>
     <div class='visual'>
       
@@ -650,15 +633,7 @@ simulator .layout .visual img{
       </svg>
       
     </div>
-    <div class='code'>
-      <playground>
-        <line>ADD 1</line>
-        <line>CMP 20</line>
-        <line>JUMPEQ 4</line>
-        <line>JUMP 0</line>
-        <line>END</line>
-      </playground>
-    </div>
+    <div class='code'></div>
   </div>
 </simulator>
 
@@ -766,21 +741,17 @@ simulator .layout .visual img{
     'ramset',
     'ramaddset'
   ];
+  var wires = {};
   
   window.addEventListener('load', Init);
   function Init(){
+    LoadWires();
     FormAllPlaygrounds();
-    
-    var wireDict = {};
+  }
+  function LoadWires(){
+    wires = {};
     for(var i=0,wire; wire=WIRES[i++];)
-      wireDict[wire] = new WireImage(wire);
-    
-    var simulator = new Simulator('ADD 1\nCMP 200\nJUMPEQ 4\nJUMP 0\nEND', wireDict);
-    simulator.addEventListener('clock', function(){
-      // console.log(simulator.repr());
-    });
-    
-    simulator.run(0);
+      wires[wire] = new WireImage(wire);
   }
   
   
@@ -788,66 +759,162 @@ simulator .layout .visual img{
     var playgrounds = document.querySelectorAll('playground');
     
     for(var i=0,playground; playground=playgrounds[i++];)
-      FormPlayground(playground);
+      new Playground(playground);
   }
-  function FormPlayground(playground){
-    var lines = GetCodeFromPlayground(playground);
+  
+  
+  function Playground(){
+    var self = this;
+    var undefined;
     
-    var menu = document.createElement('div');
-    menu.setAttribute('class', 'menu');
     
-    FormButton(menu, 'Run', new Function());
-    FormButton(menu, 'Step Forward', new Function());
-    FormButton(menu, 'Reset', new Function());
-    FormButton(menu, 'View Catalog', new Function());
-    FormButton(menu, 'View Machine Code', new Function());
-    FormButton(menu, 'View Simulation', new Function());
+    var frame;
     
-    var table = document.createElement('div');
-    table.setAttribute('class', 'table');
-    
-    var lines = GetCodeFromPlayground(playground);
-    for(var i=0; i<lines.length; i++){
-      var line = document.createElement('line');
-      var lineText = lines[i];
-      
-      var number = document.createElement('num');
-      number.innerHTML = i+1;
-      
-      var text = document.createElement('text');
-      text.innerHTML = lineText;
-      
-      var error = document.createElement('error');
-      InterpretLine(lineText, function(err){
-        if(!err) return;
-        error.innerHTML = err;
-        line.setAttribute('class', 'error');
-      });
-      
-      line.appendChild(number);
-      line.appendChild(text);
-      line.appendChild(error);
-      table.appendChild(line);
+    var rendered = {
+      lines: [],
+      table: null,
+      menu: null
     }
     
-    playground.innerHTML = '';
-    playground.appendChild(menu);
-    playground.appendChild(table);
-  }
-  function FormButton(menu, title, listener){
-    var item = document.createElement('item');
-    item.innerHTML = title;
-    item.addEventListener('click', listener);
-    menu.appendChild(item);
-  }
-  function GetCodeFromPlayground(playground){
-    var lines = playground.querySelectorAll('line');
     var code = [];
     
-    for(var i=0; i<lines.length; i++)
-      code.push(lines[i].innerHTML);
+    var simulator;
+    var isRunning = false;
+    var isSimulating = false;
+    var originalParent;
     
-    return code;
+    
+    function CreateTable(){
+      var table = document.createElement('div');
+      table.setAttribute('class', 'table');
+      
+      rendered.table = table;
+    }
+    function InterpretCode(){
+      rendered.lines = [];
+      for(var i=0; i<code.length; i++){
+        var line = document.createElement('line');
+        var lineText = code[i];
+      
+        var number = document.createElement('num');
+        number.innerHTML = i+1;
+      
+        var text = document.createElement('text');
+        text.innerHTML = lineText;
+      
+        var error = document.createElement('error');
+        InterpretLine(lineText, function(err){
+          if(!err) return;
+          error.innerHTML = err;
+          line.setAttribute('class', 'error');
+        });
+      
+        line.appendChild(number);
+        line.appendChild(text);
+        line.appendChild(error);
+        rendered.table.appendChild(line);
+        rendered.lines.push(line);
+      }
+    }
+    function FormMenu(){
+      var menu = document.createElement('div');
+      menu.setAttribute('class', 'menu');
+    
+      FormMenuButton(menu, 'Run', RunSimulator);
+      FormMenuButton(menu, 'Step Forward', StepSimulator);
+      FormMenuButton(menu, 'Reset', ResetSimulator);
+      FormMenuButton(menu, 'View Catalog', new Function());
+      FormMenuButton(menu, 'View Machine Code', new Function());
+      FormMenuButton(menu, 'View Simulation', HideShowSimulator);
+    
+      rendered.menu = menu;
+    }
+    function FormMenuButton(menu, title, listener){
+      var item = document.createElement('item');
+      item.innerHTML = title;
+      item.addEventListener('click', listener);
+      menu.appendChild(item);
+    }
+    function RenderPlayground(){
+      frame.innerHTML = '';
+      frame.appendChild(rendered.menu);
+      frame.appendChild(rendered.table);
+    }
+    
+    function StepSimulator(){
+      simulator.step();
+    }
+    function ResetSimulator(){
+      simulator.reset();
+    }
+    function RunSimulator(event){
+      if(isRunning){
+        isRunning = false;
+        event.target.innerHTML = 'Play';
+        simulator.stop();
+      }else{
+        isRunning = true;
+        event.target.innerHTML = 'Stop';
+        simulator.run(50);
+      }
+    }
+    function HideShowSimulator(event){
+      if(isSimulating) HideSimulation(event);
+      else ShowSimulation(event);
+    }
+    function ShowSimulation(event){
+      event.target.innerHTML = 'Hide Simulation';
+      
+      var simElement = document.querySelector('simulator');
+      var codeElement = simElement.querySelector('.code');
+      
+      originalParent.removeChild(frame);
+      isSimulating = true;
+      
+      codeElement.appendChild(frame);
+      
+      simulator.reset();
+      simElement.setAttribute('class', 'shown');
+    }
+    function HideSimulation(event){
+      event.target.innerHTML = 'Show Simulation';
+      
+      var simElement = document.querySelector('simulator');
+      
+      frame.parentElement.removeChild(frame);
+      originalParent.appendChild(frame);
+      isSimulating = false;
+      
+      simElement.removeAttribute('class');
+    }
+    
+    function GetCodeFromPlayground(){
+      var lines = frame.querySelectorAll('line');
+      var code = [];
+    
+      for(var i=0; i<lines.length; i++)
+        code.push(lines[i].innerHTML);
+    
+      return code;
+    }
+    
+    
+    (function Constructor(element){
+      frame = element;
+      
+      originalParent = document.createElement('div');
+      frame.parentElement.insertBefore(originalParent, frame.nextSibling);
+      frame.parentElement.removeChild(frame);
+      originalParent.appendChild(frame);
+      
+      code = GetCodeFromPlayground();
+      simulator = new Simulator(code.join('\n'), wires);
+      
+      CreateTable();
+      InterpretCode();
+      FormMenu();
+      RenderPlayground();
+    }).apply(self, arguments);
   }
   
   

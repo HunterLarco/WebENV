@@ -11,6 +11,8 @@ function PinGroup(){
   self.read = Read;
   self.init = Init;
   
+  self.writeAll = WriteAll;
+  
   self.list = List;
   self.repr = Repr;
   self.print = Print;
@@ -66,6 +68,11 @@ function PinGroup(){
       pin(wire);
       ConnectWire(wire);
     }
+  }
+  
+  function WriteAll(value){
+    for(var label in pins)
+      Write(label, value);
   }
   
   function List(){
