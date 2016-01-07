@@ -51,30 +51,15 @@ function IsNumeric(n){
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-
-function FormCodeSnippet(){
+function GetMachineCode(code){
+  var machinecode = [];
   
-}
-
-
-function CodeSnippet(){
-  var undefined;
-  var self = this;
+  var lines = code.split('\n');
+  for(var i=0; i<lines.length; i++)
+    InterpretLine(lines[i], function(err, bytecode){
+      if(err) throw err;
+      machinecode.push(bytecode);
+    });
   
-  
-  self.run = Run;
-  self.step = Step;
-  
-  
-  function Run(){
-    
-  }
-  function Step(){
-    
-  }
-  
-  
-  (function Constructor(code){
-    
-  }).apply(self, arguments);
+  return machinecode;
 }

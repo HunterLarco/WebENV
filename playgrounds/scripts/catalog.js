@@ -15,7 +15,7 @@ var CATALOG = {
   XOR    : {param:true , code:13},
   JUMP   : {param:true , code:14},
   JUMPGT : {param:true , code:15},
-  JUMPLT : {param:true , code:16},
-  JUMPEQ : {param:true , code:17},
+  JUMPEQ : {param:true , code:16},
+  JUMPLT : {param:true , code:17},
   END    : {param:false, code:31}
 };
