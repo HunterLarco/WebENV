@@ -190,6 +190,8 @@ simulator .layout .visual img{
 
 </style>
 
+<title>Nybble</title>
+
 <script src='./simulator/scripts/wire.js'></script>
 <script src='./simulator/scripts/pingroup.js'></script>
 <script src='./simulator/scripts/pinconnector.js'></script>
@@ -218,9 +220,10 @@ simulator .layout .visual img{
   
   <playground>
     <line>ADD 1</line>
-    <line>CMP 20</line>
-    <line>JUMPEQ 4</line>
-    <line>JUMP 0</line>
+    <line>MUL 2</line>
+    <line>CMP 32</line>
+    <line>JUMPEQ 5</line>
+    <line>JUMP 1</line>
     <line>END</line>
   </playground>
   
@@ -783,6 +786,8 @@ simulator .layout .visual img{
     var isSimulating = false;
     var originalParent;
     
+    var buttons = {};
+    
     
     function CreateTable(){
       var table = document.createElement('div');
@@ -820,12 +825,12 @@ simulator .layout .visual img{
       var menu = document.createElement('div');
       menu.setAttribute('class', 'menu');
     
-      FormMenuButton(menu, 'Run', RunSimulator);
-      FormMenuButton(menu, 'Step Forward', StepSimulator);
-      FormMenuButton(menu, 'Reset', ResetSimulator);
-      FormMenuButton(menu, 'View Catalog', new Function());
-      FormMenuButton(menu, 'View Machine Code', new Function());
-      FormMenuButton(menu, 'View Simulation', HideShowSimulator);
+      buttons.run     = FormMenuButton(menu, 'Run', RunStopSimulator);
+      buttons.step    = FormMenuButton(menu, 'Step Forward', StepSimulator);
+      buttons.reset   = FormMenuButton(menu, 'Reset', ResetSimulator);
+      buttons.catalog = FormMenuButton(menu, 'View Catalog', new Function());
+      buttons.bytes   = FormMenuButton(menu, 'View Machine Code', new Function());
+      buttons.viewsim = FormMenuButton(menu, 'View Simulation', HideShowSimulator);
     
       rendered.menu = menu;
     }
@@ -834,6 +839,7 @@ simulator .layout .visual img{
       item.innerHTML = title;
       item.addEventListener('click', listener);
       menu.appendChild(item);
+      return item;
     }
     function RenderPlayground(){
       frame.innerHTML = '';
@@ -845,25 +851,31 @@ simulator .layout .visual img{
       simulator.step();
     }
     function ResetSimulator(){
+      StopSimulator();
+      simulator.stop();
       simulator.reset();
     }
-    function RunSimulator(event){
-      if(isRunning){
-        isRunning = false;
-        event.target.innerHTML = 'Play';
-        simulator.stop();
-      }else{
-        isRunning = true;
-        event.target.innerHTML = 'Stop';
-        simulator.run(50);
-      }
+    function RunStopSimulator(){
+      if(isRunning) StopSimulator();
+      else RunSimulator();
     }
-    function HideShowSimulator(event){
-      if(isSimulating) HideSimulation(event);
-      else ShowSimulation(event);
+    function StopSimulator(){
+      isRunning = false;
+      buttons.run.innerHTML = 'Run';
+      simulator.stop();
     }
-    function ShowSimulation(event){
-      event.target.innerHTML = 'Hide Simulation';
+    function RunSimulator(){
+      isRunning = true;
+      buttons.run.innerHTML = 'Stop';
+      simulator.run(50);
+    }
+    function HideShowSimulator(){
+      ResetSimulator();
+      if(isSimulating) HideSimulation();
+      else ShowSimulation();
+    }
+    function ShowSimulation(){
+      buttons.viewsim.innerHTML = 'Hide Simulation';
       
       var simElement = document.querySelector('simulator');
       var codeElement = simElement.querySelector('.code');
@@ -873,11 +885,10 @@ simulator .layout .visual img{
       
       codeElement.appendChild(frame);
       
-      simulator.reset();
       simElement.setAttribute('class', 'shown');
     }
-    function HideSimulation(event){
-      event.target.innerHTML = 'Show Simulation';
+    function HideSimulation(){
+      buttons.viewsim.innerHTML = 'Show Simulation';
       
       var simElement = document.querySelector('simulator');
       
