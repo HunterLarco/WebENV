@@ -39,6 +39,7 @@ function Simulator(){
   
   self.repr = REPR;
   self.getExecutionLine = GetExecutionLine;
+  self.getAccumulator   = GetAccumulator;
   
 
   function AddEventListener(event_name, funct){
@@ -99,6 +100,9 @@ function Simulator(){
   }
   function GetExecutionLine(){
     return InstructionPointer.value();
+  }
+  function GetAccumulator(){
+    return Accumulator.value();
   }
   
   

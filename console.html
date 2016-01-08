@@ -158,6 +158,24 @@ playground .menu item:hover{
   background:rgb(202,202,202);
 }
 
+playground .info{
+  position:block;
+  
+  background:rgb(225,225,225);
+  
+  text-align:center;
+}
+playground .info .item{
+  display:inline-block;
+  vertical-align:top;
+  
+  font-size:12px;
+  padding:6px 12px;
+}
+playground .info .accumulator::before{
+  content:'Accumulator Value: ';
+}
+
 simulator{
   display:none;
   
@@ -797,7 +815,9 @@ simulator .layout .visual img{
     var rendered = {
       lines: [],
       table: null,
-      menu: null
+      menu: null,
+      info: null,
+      accumulator: null
     }
     
     var executionLine = 0;
@@ -863,17 +883,32 @@ simulator .layout .visual img{
       menu.appendChild(item);
       return item;
     }
+    function FormAccumulatorReadout(){
+      var info = document.createElement('div');
+      info.setAttribute('class', 'info');
+      
+      accumulator = document.createElement('div')
+      accumulator.setAttribute('class', 'item accumulator');
+      
+      info.appendChild(accumulator);
+      
+      rendered.info = info;
+      rendered.accumulator = accumulator;
+      
+      UpdateAccumulator();
+    }
     function RenderPlayground(){
       frame.innerHTML = '';
       frame.appendChild(rendered.menu);
       frame.appendChild(rendered.table);
+      frame.appendChild(rendered.info);
     }
     
     function StepSimulator(){
       simulator.step();
     }
     function ResetSimulator(){
-      rendered.lines[executionLine].removeAttribute('class');
+      RemoveExecutionLine();
       StopSimulator();
       simulator.stop();
       simulator.reset();
@@ -922,6 +957,22 @@ simulator .layout .visual img{
       simElement.removeAttribute('class');
     }
     
+    function OnClock(){
+      UpdateAccumulator();
+      UpdateExecutionLine();
+    }
+    function RemoveExecutionLine(){
+      rendered.lines[executionLine].removeAttribute('class');
+    }
+    function UpdateExecutionLine(){
+      RemoveExecutionLine();
+      executionLine = simulator.getExecutionLine();
+      rendered.lines[executionLine].setAttribute('class', 'running');
+    }
+    function UpdateAccumulator(){
+      rendered.accumulator.innerHTML = simulator.getAccumulator();
+    }
+    
     function GetCodeFromPlayground(){
       var lines = frame.querySelectorAll('line');
       var code = [];
@@ -943,15 +994,12 @@ simulator .layout .visual img{
       
       code = GetCodeFromPlayground();
       simulator = new Simulator(code.join('\n'), wires);
-      simulator.addEventListener('clock', function(){
-        rendered.lines[executionLine].removeAttribute('class');
-        executionLine = simulator.getExecutionLine();
-        rendered.lines[executionLine].setAttribute('class', 'running');
-      });
+      simulator.addEventListener('clock', OnClock);
       
       CreateTable();
       InterpretCode();
       FormMenu();
+      FormAccumulatorReadout();
       RenderPlayground();
     }).apply(self, arguments);
   }
