@@ -61,6 +61,9 @@ playground .table{
 playground line{
   display:table-row;
 }
+playground line.running{
+  background:rgb(215,215,215);
+}
 playground line:first-of-type num{
   padding-top:12px;
 }
@@ -69,11 +72,12 @@ playground line:last-of-type num{
 }
 playground line num{
   display:table-cell;
-  padding:0px 20px 0px 12px;
+  padding:0px 8px 0px 12px;
   width:1px;
   
   font-size:14px;
   line-height:23px;
+  white-space:nowrap;
   
   background:rgb(238,238,238);
   color:rgb(80,80,80);
@@ -84,6 +88,23 @@ playground line num{
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+playground line num::after{
+  content:'';
+  display:inline-block;
+  vertical-align:middle;
+  
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  
+  margin:0px 4px;
+  
+  background:rgb(233,30,99);
+  visibility:hidden;
+}
+playground line.running num::after{
+  visibility:visible;
 }
 playground line.error num{
   color:rgb(233,30,99);
@@ -779,6 +800,7 @@ simulator .layout .visual img{
       menu: null
     }
     
+    var executionLine = 0;
     var code = [];
     
     var simulator;
@@ -851,6 +873,7 @@ simulator .layout .visual img{
       simulator.step();
     }
     function ResetSimulator(){
+      rendered.lines[executionLine].removeAttribute('class');
       StopSimulator();
       simulator.stop();
       simulator.reset();
@@ -920,6 +943,11 @@ simulator .layout .visual img{
       
       code = GetCodeFromPlayground();
       simulator = new Simulator(code.join('\n'), wires);
+      simulator.addEventListener('clock', function(){
+        rendered.lines[executionLine].removeAttribute('class');
+        executionLine = simulator.getExecutionLine();
+        rendered.lines[executionLine].setAttribute('class', 'running');
+      });
       
       CreateTable();
       InterpretCode();
