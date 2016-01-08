@@ -63,3 +63,10 @@ function GetMachineCode(code){
   
   return machinecode;
 }
+function PaddedMachineCode(code){
+  return GetMachineCode(code).map(function(bytecode){
+    var str = bytecode.toString(2);
+    var padded = '0000000000000'.slice(str.length) + str;
+    return padded.slice(0,5) + '&nbsp;' + padded.slice(5);
+  });
+}

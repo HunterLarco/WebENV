@@ -109,12 +109,20 @@ playground line.running num::after{
 playground line.error num{
   color:rgb(233,30,99);
 }
-playground line text{
+playground line text,
+playground line bytecode{
   display:table-cell;
   padding:0px 12px 0px 8px;
   
   font-size:16px;
   line-height:23px;
+}
+playground line bytecode{
+  display:none;
+  width:1px;
+}
+playground.showByteCode line bytecode{
+  display:table-cell;
 }
 playground line error{
   display:table-cell;
@@ -826,6 +834,7 @@ simulator .layout .visual img{
     var simulator;
     var isRunning = false;
     var isSimulating = false;
+    var canViewMachineCode = false;
     var originalParent;
     
     var buttons = {};
@@ -842,6 +851,7 @@ simulator .layout .visual img{
       for(var i=0; i<code.length; i++){
         var line = document.createElement('line');
         var lineText = code[i];
+        var byteCode = PaddedMachineCode(lineText)[0];
       
         var number = document.createElement('num');
         number.innerHTML = i+1;
@@ -855,10 +865,14 @@ simulator .layout .visual img{
           error.innerHTML = err;
           line.setAttribute('class', 'error');
         });
+        
+        var byte = document.createElement('bytecode');
+        byte.innerHTML = byteCode;
       
         line.appendChild(number);
         line.appendChild(text);
         line.appendChild(error);
+        line.appendChild(byte);
         rendered.table.appendChild(line);
         rendered.lines.push(line);
       }
@@ -871,7 +885,7 @@ simulator .layout .visual img{
       buttons.step    = FormMenuButton(menu, 'Step Forward', StepSimulator);
       buttons.reset   = FormMenuButton(menu, 'Reset', ResetSimulator);
       buttons.catalog = FormMenuButton(menu, 'View Catalog', new Function());
-      buttons.bytes   = FormMenuButton(menu, 'View Machine Code', new Function());
+      buttons.bytes   = FormMenuButton(menu, 'View Machine Code', ViewHideMachineCode);
       buttons.viewsim = FormMenuButton(menu, 'View Simulation', HideShowSimulator);
     
       rendered.menu = menu;
@@ -971,6 +985,21 @@ simulator .layout .visual img{
     }
     function UpdateAccumulator(){
       rendered.accumulator.innerHTML = simulator.getAccumulator();
+    }
+    
+    function ViewHideMachineCode(){
+      if(canViewMachineCode) HideMachineCode();
+      else ShowMachineCode();
+    }
+    function ShowMachineCode(){
+      canViewMachineCode = true;
+      frame.setAttribute('class', 'showByteCode');
+      buttons.bytes.innerHTML = 'Hide Machine Code';
+    }
+    function HideMachineCode(){
+      canViewMachineCode = false;
+      frame.removeAttribute('class');
+      buttons.bytes.innerHTML = 'View Machine Code';
     }
     
     function GetCodeFromPlayground(){
