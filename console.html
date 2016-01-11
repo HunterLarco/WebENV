@@ -11,6 +11,8 @@ body{
   
   font-size:0px;
   font-family:helvetica, arial;
+  
+  -webkit-overflow-scrolling: touch;
 }
 
 article{
@@ -308,6 +310,7 @@ simulator .graph .processes{
   flex:2;
   
   overflow:scroll;
+  position:relative;
 }
 
 simulator .processes group{
@@ -372,6 +375,19 @@ simulator .processes group.collapsed triangle{
 }
 simulator .processes group.collapsed h2{
   display:none;
+}
+
+simulator .processes:empty:after{
+  content:'Micro Program Log';
+  display:block;
+  
+  font-size:16px;
+  color:rgb(180,180,180);
+  
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
 }
 
 </style>
