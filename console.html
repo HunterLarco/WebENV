@@ -168,6 +168,13 @@ playground .info .accumulator::before{
   content:'Accumulator Value: ';
 }
 
+simulator playground line num{
+  background:rgb(255,255,255);
+}
+simulator playground{
+  background:rgb(245,245,245);
+}
+
 simulator{
   display:none;
   
@@ -239,7 +246,10 @@ simulator .graph{
   display:flex;
   flex-flow:row;
   
-  width:500px;
+  min-width:8px;
+  max-width:50%;
+  
+  width:450px;
   height:100%;
   
   background:rgb(245,245,245);
@@ -296,6 +306,72 @@ simulator .graph .divider div::before{
 
 simulator .graph .processes{
   flex:2;
+  
+  overflow:scroll;
+}
+
+simulator .processes group{
+  display:block;
+  
+  margin:8px 0px;
+}
+simulator .processes h1,
+simulator .processes h2{
+  font-size:13px;
+}
+simulator .processes h1{
+  font-weight:700;
+  
+  margin:0px 9px;
+  cursor:pointer;
+}
+simulator .processes h2{
+  font-weight:300;
+  
+  border-left:1px solid rgb(200,200,200);
+  
+  position:relative;
+  padding:4px 0px 4px 8px;
+  margin:0px 12px;
+}
+simulator .processes h2:last-child:after{
+  content:'';
+  display:block;
+  
+  height:1px;
+  width:4px;
+  
+  background:rgb(200,200,200);
+  
+  position:absolute;
+  bottom:0px;
+  left:0px;
+}
+
+simulator .processes triangle{
+  display:inline-block;
+  margin-right:8px;
+  
+  width:0;
+  height:0;
+  border-style:solid;
+  border-width:6.9px 4px 0 4px;
+  border-color:rgb(160,160,160) transparent transparent transparent;
+}
+simulator .processes group:not(.collapsed) h1:hover triangle{
+  border-color:rgb(80,80,80) transparent transparent transparent;
+}
+simulator .processes group.collapsed h1:hover triangle{
+  border-color:transparent transparent transparent rgb(80,80,80);
+}
+simulator .processes group.collapsed triangle{
+  border-color:transparent transparent transparent rgb(160,160,160);
+  border-width:4px 0px 4px 6.9px;
+  
+  margin-left:1.9px;
+}
+simulator .processes group.collapsed h2{
+  display:none;
 }
 
 </style>
@@ -753,9 +829,7 @@ simulator .graph .processes{
       <div class='divider'>
         <div></div>
       </div>
-      <div class='processes'>
-      
-      </div>
+      <div class='processes'></div>
     </div>
   </div>
 </simulator>
@@ -763,6 +837,40 @@ simulator .graph .processes{
 
 <script>
 (function(){
+  
+  
+  var groupStack = [];
+  console.group = function Group(header){
+    var group = document.createElement('group');
+    
+    var triangle = document.createElement('triangle');
+    
+    var h1 = document.createElement('h1');
+    h1.appendChild(triangle);
+    h1.appendChild(document.createTextNode(header));
+    
+    h1.addEventListener('click', function ToggleGroup(){
+      if(group.getAttribute('class') === 'collapsed')
+        group.removeAttribute('class');
+      else
+        group.setAttribute('class', 'collapsed');
+    });
+    
+    group.appendChild(h1);
+    document.querySelector('simulator .processes').appendChild(group);
+    
+    groupStack.push(group);
+  }
+  console.groupEnd = function GroupEnd(){
+    groupStack.pop();
+  }
+  console.info = function Info(text){
+    var h2 = document.createElement('h2');
+    h2.innerHTML = text;
+    
+    groupStack[groupStack.length-1].appendChild(h2);
+  }
+  
   
   var WIRES = [
     'databus1'  ,
@@ -868,13 +976,37 @@ simulator .graph .processes{
   
   window.addEventListener('load', Init);
   function Init(){
+    LoadDivider();
+    
     LoadWires();
     FormAllPlaygrounds();
+    
+    document.querySelector('.menu item:last-child').click()
   }
   function LoadWires(){
     wires = {};
     for(var i=0,wire; wire=WIRES[i++];)
       wires[wire] = new WireImage(wire);
+  }
+  
+  function LoadDivider(){
+    var divider = document.querySelector('simulator .graph .divider');
+    divider.addEventListener('mousedown', DividerMouseDown);
+  }
+  function DividerMouseDown(){
+    window.addEventListener('mousemove', DividerMouseMove);
+    window.addEventListener('mouseup', DividerMouseUp);
+  }
+  function DividerMouseMove(event){
+    var graph = document.querySelector('simulator .graph');
+    
+    var dx = event.movementX;
+    
+    graph.style.width = (graph.offsetWidth - dx) + 'px';
+  }
+  function DividerMouseUp(){
+    window.removeEventListener('mousemove', DividerMouseMove);
+    window.removeEventListener('mouseup', DividerMouseUp);
   }
   
   
@@ -957,7 +1089,7 @@ simulator .graph .processes{
       buttons.run     = FormMenuButton(menu, 'Run', RunStopSimulator);
       buttons.step    = FormMenuButton(menu, 'Step Forward', StepSimulator);
       buttons.reset   = FormMenuButton(menu, 'Reset', ResetSimulator);
-      buttons.catalog = FormMenuButton(menu, 'View Catalog', new Function());
+      // buttons.catalog = FormMenuButton(menu, 'View Catalog', new Function());
       buttons.bytes   = FormMenuButton(menu, 'View Machine Code', ViewHideMachineCode);
       buttons.viewsim = FormMenuButton(menu, 'View Simulation', HideShowSimulator);
     
