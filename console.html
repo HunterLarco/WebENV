@@ -856,8 +856,10 @@ simulator .processes group.collapsed h2{
         group.setAttribute('class', 'collapsed');
     });
     
+    var autoscroll = AutoScrollConsoleClosure();
     group.appendChild(h1);
     document.querySelector('simulator .processes').appendChild(group);
+    autoscroll();
     
     groupStack.push(group);
   }
@@ -868,9 +870,22 @@ simulator .processes group.collapsed h2{
     var h2 = document.createElement('h2');
     h2.innerHTML = text;
     
+    var autoscroll = AutoScrollConsoleClosure();
     groupStack[groupStack.length-1].appendChild(h2);
+    autoscroll();
   }
-  
+  console.clear = function Clear(){
+    document.querySelector('simulator .processes').innerHTML = '';
+  }
+  function AutoScrollConsoleClosure(){
+    var frame = document.querySelector('simulator .processes');
+    
+    if(frame.scrollTop + frame.offsetHeight === frame.scrollHeight)
+      return function(){frame.scrollTop = frame.scrollHeight;}
+    else
+      return new Function();
+  }
+  function ClearConsole(){}
   
   var WIRES = [
     'databus1'  ,
@@ -1131,6 +1146,7 @@ simulator .processes group.collapsed h2{
       StopSimulator();
       simulator.stop();
       simulator.reset();
+      console.clear();
     }
     function RunStopSimulator(){
       if(isRunning) StopSimulator();
