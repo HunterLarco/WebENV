@@ -59,6 +59,8 @@ playground{
 playground .table{
   display:table;
   width:100%;
+  
+  position:relative;
 }
 playground line{
   display:table-row;
@@ -430,6 +432,22 @@ catalog item:not(.noparam) cmd:after{
   color:rgb(180,180,180);
 }
 
+playground textarea{
+  resize:none;
+  border:none;
+  outline:none;
+  background:none;
+  -webkit-text-fill-color:transparent;
+  
+  position:absolute;
+  
+  font-size:16px;
+  line-height:23px;
+  font-family:inherit;
+  
+  padding:12px 0px 12px 8px;
+}
+
 </style>
 
 <title>Nybble</title>
@@ -567,9 +585,13 @@ catalog item:not(.noparam) cmd:after{
   <playground>
     <line>ADD 1</line>
     <line>MUL 2</line>
-    <line>CMP 32</line>
+    <line>CMP 8</line>
     <line>JUMPEQ 5</line>
     <line>JUMP 1</line>
+    <line>MUL 2</line>
+    <line>CMP 32</line>
+    <line>JUMPEQ 9</line>
+    <line>JUMP 5</line>
     <line>END</line>
   </playground>
   
@@ -1218,6 +1240,9 @@ catalog item:not(.noparam) cmd:after{
     
     var buttons = {};
     
+    var editorValue = null;
+    var editor;
+    
     
     function CreateTable(){
       var table = document.createElement('div');
@@ -1226,11 +1251,20 @@ catalog item:not(.noparam) cmd:after{
       rendered.table = table;
     }
     function InterpretCode(){
-      rendered.lines = [];
+      while(rendered.lines.length > 0){
+        var line = rendered.lines[0];
+        line.parentElement.removeChild(line);
+        rendered.lines.shift();
+      }
+      
       for(var i=0; i<code.length; i++){
         var line = document.createElement('line');
         var lineText = code[i];
-        var byteCode = PaddedMachineCode(lineText)[0];
+        
+        var byteCode = 'N/A';
+        try{
+          byteCode = PaddedMachineCode(lineText)[0];
+        }catch(e){}
       
         var number = document.createElement('num');
         number.innerHTML = i+1;
@@ -1296,6 +1330,47 @@ catalog item:not(.noparam) cmd:after{
       frame.appendChild(rendered.table);
       frame.appendChild(rendered.info);
     }
+    
+    function AddTextarea(){
+      editor = document.createElement('textarea');
+      ResizeEditor();
+      rendered.table.appendChild(editor);
+      
+      editor.addEventListener('keydown', EditorChange);
+    }
+    function ResizeEditor(){
+      var numWidth = rendered.lines[0].children[0].offsetWidth;
+      var textWidth = rendered.lines[0].children[1].offsetWidth
+      
+      editor.style.left = numWidth+'px';
+      editor.style.top = '0px';
+      editor.style.width = textWidth+'px';
+      editor.style.height = '100%';
+    }
+    function EditorChange(event){
+      ResetSimulator();
+      
+      setTimeout(function(){
+        editorValue = event.target.value;
+        ValidateChanges();
+      }, 0);
+    }
+    function HasChanges(){
+      return editorValue !== null;
+    }
+    function ValidateChanges(){
+      code = editorValue.split('\n');
+      InterpretCode();
+      ResizeEditor();
+      editorValue = null;
+      FormSimulator();
+    }
+    
+    function FormSimulator(){
+      simulator = new Simulator(code.join('\n'), wires);
+      simulator.addEventListener('clock', OnClock);
+    }
+    
     
     function StepSimulator(){
       simulator.step();
@@ -1378,11 +1453,13 @@ catalog item:not(.noparam) cmd:after{
       UpdateExecutionLine();
     }
     function RemoveExecutionLine(){
+      if(!rendered.lines[executionLine]) return;
       rendered.lines[executionLine].removeAttribute('class');
     }
     function UpdateExecutionLine(){
       RemoveExecutionLine();
       executionLine = simulator.getExecutionLine();
+      if(!rendered.lines[executionLine]) return;
       rendered.lines[executionLine].setAttribute('class', 'running');
     }
     function UpdateAccumulator(){
@@ -1424,14 +1501,16 @@ catalog item:not(.noparam) cmd:after{
       originalParent.appendChild(frame);
       
       code = GetCodeFromPlayground();
-      simulator = new Simulator(code.join('\n'), wires);
-      simulator.addEventListener('clock', OnClock);
       
       CreateTable();
       InterpretCode();
+      FormSimulator();
       FormMenu();
       FormAccumulatorReadout();
       RenderPlayground();
+      
+      AddTextarea();
+      editor.value = code.join('\n');
     }).apply(self, arguments);
   }
   

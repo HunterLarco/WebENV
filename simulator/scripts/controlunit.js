@@ -49,7 +49,8 @@ function ControlUnit(){
       SetModOperator
     ],
     CMP: [
-      SetCMPOperator
+      SetCMPOperator,
+      EndCMPOperator
     ],
     LShift: [
       SetLShiftOperator
@@ -440,12 +441,16 @@ function ControlUnit(){
   function SetCMPOperator(){
     console.group('cmd: CMP');
     console.info('Update ALU flags using new ALU input without changing the accumulator');
-    console.groupEnd();
     
     alucontrol.write(5);
     pins.write('SETFLAGS', 1);
+  }
+  function EndCMPOperator(){
+    console.info('Close setting ALU flags');
+    console.groupEnd();
+    
     pins.write('SETFLAGS', 0);
-
+    
     IncrementToNextInstruction();
   }
   
