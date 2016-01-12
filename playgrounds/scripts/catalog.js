@@ -1,0 +1,21 @@
+var CATALOG = {
+  LOAD   : {param:true , code: 0},
+  STORE  : {param:true , code: 1},
+  ADD    : {param:true , code: 2},
+  SUB    : {param:true , code: 3},
+  MUL    : {param:true , code: 4},
+  DIV    : {param:true , code: 5},
+  MOD    : {param:true , code: 6},
+  CMP    : {param:true , code: 7},
+  LSHIFT : {param:true , code: 8},
+  RSHIFT : {param:true , code: 9},
+  AND    : {param:true , code:10},
+  OR     : {param:true , code:11},
+  NOT    : {param:true , code:12},
+  XOR    : {param:true , code:13},
+  JUMP   : {param:true , code:14},
+  JUMPGT : {param:true , code:15},
+  JUMPEQ : {param:true , code:16},
+  JUMPLT : {param:true , code:17},
+  END    : {param:false, code:31}
+};
