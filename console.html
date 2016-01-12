@@ -209,6 +209,8 @@ simulator .vertlayout{
 }
 simulator .vertlayout .code{
   background:rgb(245,245,245);
+  overflow:scroll;
+  max-height:50%;
 }
 simulator .vertlayout .visual{
   flex:2;
@@ -390,6 +392,44 @@ simulator .processes:empty:after{
   transform:translate(-50%, -50%);
 }
 
+simulator catalog{
+  background:none;
+}
+playground catalog{
+  display:table;
+}
+catalog{
+  display:none;
+  width:100%;
+  max-width:700px;
+  margin:0px auto;
+  
+  border-spacing:10px 6px;
+  background:rgb(238,238,238);
+}
+catalog item:first-child{
+  font-weight:bold;
+}
+catalog item{
+  display:table-row;
+}
+catalog cmd,
+catalog byte,
+catalog text{
+  display:table-cell;
+  font-size:10px;
+}
+catalog cmd,
+catalog byte{
+  width:1px;
+  white-space:nowrap;
+}
+catalog item:not(.noparam) cmd:after{
+  content:' {n}';
+  
+  color:rgb(180,180,180);
+}
+
 </style>
 
 <title>Nybble</title>
@@ -413,6 +453,110 @@ simulator .processes:empty:after{
 
 </head>
 <body>
+  
+  
+<catalog>
+  <item class='noparam'>
+    <cmd>Command</cmd>
+    <byte>Code</byte>
+    <text>Explanation</text>
+  </item>
+  <item>
+    <cmd>LOAD</cmd>
+    <byte>00000</byte>
+    <text>Adds the provided number to the accumulator</text>
+  </item>
+  <item>
+    <cmd>STORE</cmd>
+    <byte>00001</byte>
+    <text>Adds the provided number to the accumulator</text>
+  </item>
+  <item>
+    <cmd>ADD</cmd>
+    <byte>00010</byte>
+    <text>Adds the provided number to the accumulator</text>
+  </item>
+  <item>
+    <cmd>SUB</cmd>
+    <byte>00011</byte>
+    <text>Subtracts the provided number from the accumulator</text>
+  </item>
+  <item>
+    <cmd>MUL</cmd>
+    <byte>00100</byte>
+    <text>Multiplies the provided number against the accumulator</text>
+  </item>
+  <item>
+    <cmd>DIV</cmd>
+    <byte>00101</byte>
+    <text>Divides the accumulator by the provided number</text>
+  </item>
+  <item>
+    <cmd>MOD</cmd>
+    <byte>00110</byte>
+    <text>Sets the accumulator to the accumulator modulo provided number</text>
+  </item>
+  <item>
+    <cmd>CMP</cmd>
+    <byte>00111</byte>
+    <text>Sets the ALU flags from the comparison of provided number compared to accumulator</text>
+  </item>
+  <item>
+    <cmd>LSHIFT</cmd>
+    <byte>01000</byte>
+    <text>Left-shifts the accumulator based on the provided number</text>
+  </item>
+  <item>
+    <cmd>RSHIFT</cmd>
+    <byte>01001</byte>
+    <text>Right-shifts the accumulator based on the provided number</text>
+  </item>
+  <item>
+    <cmd>AND</cmd>
+    <byte>01010</byte>
+    <text>Sets the accumulator to the provided number bitwise-and the accumulator</text>
+  </item>
+  <item>
+    <cmd>OR</cmd>
+    <byte>01011</byte>
+    <text>Sets the accumulator to the provided number bitwise-or the accumulator</text>
+  </item>
+  <item class='noparam'>
+    <cmd>NOT</cmd>
+    <byte>01100</byte>
+    <text>Sets the accumulator to the bitwise-not of the accumulator</text>
+  </item>
+  <item>
+    <cmd>XOR</cmd>
+    <byte>01101</byte>
+    <text>Sets the accumulator to the provided number bitwise-xor the accumulator</text>
+  </item>
+  <item>
+    <cmd>JUMP</cmd>
+    <byte>01110</byte>
+    <text>Jumps execution to the provided RAM address</text>
+  </item>
+  <item>
+    <cmd>JUMPGT</cmd>
+    <byte>01111</byte>
+    <text>Jumps execution to the provided RAM address only if the ALU gt flag is on</text>
+  </item>
+  <item>
+    <cmd>JUMPEQ</cmd>
+    <byte>10000</byte>
+    <text>Jumps execution to the provided RAM address only if the ALU eq flag is on</text>
+  </item>
+  <item>
+    <cmd>JUMPLT</cmd>
+    <byte>10001</byte>
+    <text>Jumps execution to the provided RAM address only if the ALU gt and eq flags are off</text>
+  </item>
+  <item class='noparam'>
+    <cmd>END</cmd>
+    <byte>11111</byte>
+    <text>Ends all execution</text>
+  </item>
+</catalog>
 
 
 <article>
@@ -1011,8 +1155,6 @@ simulator .processes:empty:after{
     
     LoadWires();
     FormAllPlaygrounds();
-    
-    document.querySelector('.menu item:last-child').click()
   }
   function LoadWires(){
     wires = {};
@@ -1071,6 +1213,7 @@ simulator .processes:empty:after{
     var isRunning = false;
     var isSimulating = false;
     var canViewMachineCode = false;
+    var isShowingCatalog = false;
     var originalParent;
     
     var buttons = {};
@@ -1120,7 +1263,7 @@ simulator .processes:empty:after{
       buttons.run     = FormMenuButton(menu, 'Run', RunStopSimulator);
       buttons.step    = FormMenuButton(menu, 'Step Forward', StepSimulator);
       buttons.reset   = FormMenuButton(menu, 'Reset', ResetSimulator);
-      // buttons.catalog = FormMenuButton(menu, 'View Catalog', new Function());
+      buttons.catalog = FormMenuButton(menu, 'View Catalog', ToggleCatalog);
       buttons.bytes   = FormMenuButton(menu, 'View Machine Code', ViewHideMachineCode);
       buttons.viewsim = FormMenuButton(menu, 'View Simulation', HideShowSimulator);
     
@@ -1206,6 +1349,28 @@ simulator .processes:empty:after{
       isSimulating = false;
       
       simElement.removeAttribute('class');
+    }
+    function ToggleCatalog(){
+      if(isShowingCatalog) HideCatalog();
+      else ShowCatalog();
+    }
+    function HideCatalog(){
+      isShowingCatalog = false;
+      
+      buttons.catalog.innerHTML = 'View Catalog';
+      
+      var catalog = document.querySelector('catalog');
+      catalog.parentElement.removeChild(catalog);
+      document.body.appendChild(catalog);
+    }
+    function ShowCatalog(){
+      isShowingCatalog = true;
+      
+      buttons.catalog.innerHTML = 'Hide Catalog';
+      
+      var catalog = document.querySelector('catalog');
+      catalog.parentElement.removeChild(catalog);
+      frame.appendChild(catalog);
     }
     
     function OnClock(){
