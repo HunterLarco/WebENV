@@ -172,19 +172,22 @@ function ControlUnit(){
     self.INST2 = pins.init('INST2', Update);
     self.INST3 = pins.init('INST3', Update);
     self.INST4 = pins.init('INST4', Update);
+    self.INST5 = pins.init('INST5', Update);
     self.INST  = new PinConnector([
       self.INST0,
       self.INST1,
       self.INST2,
       self.INST3,
-      self.INST4
+      self.INST4,
+      self.INST5
     ]);
     instruction = new BinaryPinGroup(pins, [
       'INST0',
       'INST1',
       'INST2',
       'INST3',
-      'INST4'
+      'INST4',
+      'INST5'
     ]);
     
     alucontrol = new BinaryPinGroup(pins, ['ALUCTL0', 'ALUCTL1', 'ALUCTL2', 'ALUCTL3']);
@@ -291,24 +294,24 @@ function ControlUnit(){
     var action;
     
     switch(instruction.read()){
-      case 0:  action = catalog.Load; break;
-      case 1:  action = catalog.Store; break;
-      case 2:  action = catalog.Add; break;
-      case 3:  action = catalog.Sub; break;
-      case 4:  action = catalog.Mul; break;
-      case 5:  action = catalog.Div; break;
-      case 6:  action = catalog.Mod; break;
-      case 7:  action = catalog.CMP; break;
-      case 8:  action = catalog.LShift; break;
-      case 9:  action = catalog.RShift; break;
-      case 10: action = catalog.And; break;
-      case 11: action = catalog.Or; break;
-      case 12: action = catalog.Not; break;
-      case 13: action = catalog.Xor; break;
-      case 14: action = catalog.Jump; break;
-      case 15: action = catalog.JumpGT; break;
-      case 16: action = catalog.JumpEQ; break;
-      case 17: action = catalog.JumpLT; break;
+      case 1:  action = catalog.Load; break;
+      case 2:  action = catalog.Store; break;
+      case 3:  action = catalog.Add; break;
+      case 4:  action = catalog.Sub; break;
+      case 5:  action = catalog.Mul; break;
+      case 6:  action = catalog.Div; break;
+      case 7:  action = catalog.Mod; break;
+      case 8:  action = catalog.CMP; break;
+      case 9:  action = catalog.LShift; break;
+      case 10:  action = catalog.RShift; break;
+      case 11: action = catalog.And; break;
+      case 12: action = catalog.Or; break;
+      case 13: action = catalog.Not; break;
+      case 14: action = catalog.Xor; break;
+      case 15: action = catalog.Jump; break;
+      case 16: action = catalog.JumpGT; break;
+      case 17: action = catalog.JumpEQ; break;
+      case 18: action = catalog.JumpLT; break;
       case 31: action = catalog.End; break;
       default: action = [];
     }
