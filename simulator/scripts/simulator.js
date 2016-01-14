@@ -81,6 +81,7 @@ function Simulator(){
     ALU.reset();
     Instruction.reset();
     MemoryAddress.reset();
+    ram.reset(instructions);
   }
   
   function REPR(){

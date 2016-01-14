@@ -11,11 +11,12 @@ var CATALOG = {
   RSHIFT : {param:true , code:10},
   AND    : {param:true , code:11},
   OR     : {param:true , code:12},
-  NOT    : {param:true , code:13},
+  NOT    : {param:false, code:13},
   XOR    : {param:true , code:14},
   JUMP   : {param:true , code:15},
   JUMPGT : {param:true , code:16},
   JUMPEQ : {param:true , code:17},
   JUMPLT : {param:true , code:18},
+  SET    : {param:true , code:19},
   END    : {param:false, code:31}
 };

@@ -583,11 +583,22 @@ playground textarea{
   <p>Lets start with some basic (very basic) computer code</p>
   
   <playground>
+    <line>SET 4</line>
+    <line>STORE 100</line>
+    <line>SET 2</line>
+    <line>STORE 101</line>
+    <line>SET 1</line>
+    <line>STORE 103</line>
+    <line>LOAD 102</line>
+    <line>CMP R101</line>
+    <line>JUMPEQ 15</line>
     <line>ADD 1</line>
-    <line>MUL 2</line>
-    <line>CMP 32</line>
-    <line>JUMPEQ 5</line>
-    <line>JUMP 1</line>
+    <line>STORE 102</line>
+    <line>LOAD 103</line>
+    <line>MUL R100</line>
+    <line>STORE 103</line>
+    <line>JUMP 6</line>
+    <line>LOAD 103</line>
     <line>END</line>
   </playground>
   
@@ -1053,6 +1064,7 @@ playground textarea{
 <script>
 (function(){
   
+  window.wConsole = console;
   
   var groupStack = [];
   console.group = function Group(header){
