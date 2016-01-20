@@ -2,6 +2,10 @@
 <head>
 <style>
 
+body{
+  background:rgb(15,15,15);
+}
+
 .shellwindow{
   position:fixed;
   
@@ -9,8 +13,6 @@
   left:0px;
   right:0px;
   bottom:0px;
-  
-  background:rgb(15,15,15);
 }
 
 </style>
@@ -50,6 +52,14 @@
         'flags': 'fill verbose',
         'worker': DoMakeDir,
         'description': 'Makes directories'
+      },
+      
+      {
+        'command': 'rm',
+        'args': 'path',
+        'flags': '',
+        'worker': RemoveDir,
+        'description': 'Removes a file or directory'
       },
       
       {
@@ -122,6 +132,10 @@
         WLocalDrive.makeDirectory(path);
         if(obj.verbose) WLogger.inform('Directory created:', path.getPathAsString());
       }
+    }
+    function RemoveDir(obj){
+      var wpath = workingDirectory.concat(obj.path);
+      WLocalDrive.removeReference(wpath);
     }
     function MakeDirectoryWithFillin(wpath, isverbose){
       var lastDir;

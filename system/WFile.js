@@ -14,6 +14,7 @@
     
     self.getParent = GetParent;
     self.setParent = SetParent;
+    self.removeParent = RemoveParent;
     
     self.getFileBlob = GetFileBlob;
     
@@ -31,6 +32,9 @@
     }
     function SetParent(_parentDir){
       parentDir = _parentDir;
+    }
+    function RemoveParent(){
+      parentDir = undefined;
     }
     
     function GetFileBlob(){

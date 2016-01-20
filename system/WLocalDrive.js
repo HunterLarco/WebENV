@@ -10,6 +10,7 @@
     
     self.writeFile = WriteFile;
     self.makeDirectory = MakeDirectory;
+    self.removeReference = RemoveReference;
     
     self.exists = Exists;
     self.isDirectory = IsDirectory;
@@ -54,6 +55,15 @@
       
       SaveToLocalStorage();
       return newDir;
+    }
+    function RemoveReference(wpath){
+      var endNodeName = wpath.getLastToken();
+      var enclosingPath = wpath.concat('..');
+      var enclosingDir = LocatePath(enclosingPath);
+      
+      enclosingDir.removeChild(endNodeName);
+      
+      SaveToLocalStorage();
     }
     
     function Exists(wpath){

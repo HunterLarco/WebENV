@@ -17,10 +17,12 @@
     
     self.getParent = GetParent;
     self.setParent = SetParent;
+    self.removeParent = RemoveParent;
     
     self.getChild = GetChild;
     self.setChild = SetChild;
     self.hasChild = HasChild;
+    self.removeChild = RemoveChild;
     
     self.getDirectoryName = GetDirectoryName;
     
@@ -46,6 +48,9 @@
     function SetParent(_parentDir){
       parentDir = _parentDir;
     }
+    function RemoveParent(){
+      parentDir = undefined;
+    }
     
     function GetChild(name){
       if(children[name] === undefined){
@@ -67,6 +72,11 @@
           return false;
         }
       });
+    }
+    function RemoveChild(name){
+      var obj = GetChild(name);
+      obj.removeParent();
+      delete children[name];
     }
     
     function GetDirectoryName(){
