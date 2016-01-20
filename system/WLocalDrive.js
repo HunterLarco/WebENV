@@ -17,9 +17,6 @@
     
     self.locatePath = LocatePath;
     
-    // self.saveToLocalStorage = SaveToLocalStorage;
-    // self.loadFromLocalStorage = LoadFromLocalStorage;
-    
     
     function WriteFile(wfile){
       var path = wfile.getPath();
@@ -33,6 +30,7 @@
       var dir = LocatePath(enclosingPath);
       dir.setChild(wfile.getFileBlob().getFileName(), wfile);
       
+      SaveToLocalStorage();
       return wfile;
     }
     function MakeDirectory(wpath){
@@ -54,6 +52,7 @@
       var newDir = new WDirectory(wpath);
       enclosingDir.setChild(newDirName, newDir);
       
+      SaveToLocalStorage();
       return newDir;
     }
     
@@ -94,6 +93,60 @@
     }
     
     
+    function LoadFromLocalStorage(){
+      var rawmap = localStorage.getItem('fileSystem');
+      if(!rawmap) return;
+      var map = JSON.parse(rawmap);
+      
+      driveRoot = new WDirectory(new WPath('/'));
+      RecurseLoadStorage(map, driveRoot);
+    }
+    function RecurseLoadStorage(node, cd){
+      for(var key in node){
+        var path = cd.getPath().concat(key);
+        var newNode = node[key];
+        if (newNode.constructor === String){
+          var blob = new WFileBlob({
+            'content': newNode,
+            'name': key
+          });
+          var file = new WFile({
+            blob: blob,
+            path: path
+          });
+          cd.setChild(key, file);
+        }else{
+          var newDirectory = new WDirectory(path);
+          cd.setChild(key, newDirectory);
+          RecurseLoadStorage(newNode, newDirectory)
+        }
+      }
+    }
+    
+    function SaveToLocalStorage(){
+      var map = FormDriveMap();
+      var json = JSON.stringify(map);
+      localStorage.setItem('fileSystem', json);
+    }
+    function FormDriveMap(){
+      var map = {}
+      RecurseFormDriveMap(driveRoot, map);
+      return map;
+    }
+    function RecurseFormDriveMap(node, map){
+      var children = node.getChildren();
+      for(var i=0,child; child=children[i++];){
+        if(child instanceof WDirectory){
+          var newNode = {};
+          map[child.getDirectoryName()] = newNode;
+          RecurseFormDriveMap(child, newNode);
+        }else{
+          var blob = child.getFileBlob();
+          map[blob.getFileName()] = blob.getContent();
+        }
+      }
+    }
+    
     function QuietlyLocatePath(wpath){
       return WLogger.try(function(){
         try{
@@ -105,7 +158,9 @@
     }
     
     
-    (function Constructor(){}).apply(self, arguments);
+    (function Constructor(){
+      LoadFromLocalStorage();
+    }).apply(self, arguments);
   }
   
   BOOTLOADER.register({
