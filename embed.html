@@ -1,0 +1,257 @@
+<html>
+<style>
+
+body{
+  font-size:0px;
+  font-family:helvetica;
+  
+  padding:30px;
+}
+
+.frame{
+  display:block;
+  max-width:600px;
+  margin:0px auto;
+  
+  box-shadow:inset 0px 0px 0px 1px rgb(230,230,230), 0px 0px 0px 0px rgba(0,0,0,0.4);
+  
+  transition:all 250ms ease;
+}
+.frame:hover{
+  box-shadow:inset 0px 0px 0px 0px rgb(230,230,230), 0px 0px 40px 0px rgba(0,0,0,0.4);
+  transform:scale(1.05, 1.05);
+}
+
+.frame .video{
+  position:relative;
+  overflow:hidden;
+}
+.frame video{
+  width:100%;
+  
+  padding:0px;
+  margin:0px;
+}
+.frame .video .refresh{
+  position:absolute;
+  top:0px;
+  left:0px;
+  width:100%;
+  height:100%;
+  
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-pack: center;
+  -moz-box-align: center;
+  display: box;
+  box-orient: horizontal;
+  box-pack: center;
+  box-align: center;
+  
+  background:rgba(0,0,0,0.2);
+  
+  cursor:pointer;
+  
+  opacity:0;
+  transform:scale(1.45,1.45);
+  transition:all 250ms;
+}
+.frame.refresh .video .refresh{
+  opacity:1;
+  transform:scale(1,1);
+}
+.frame .video .refresh img{
+  height:80px;
+  width:80px;
+  
+  opacity:0.9;
+}
+
+.info{
+  padding:24px 20px;
+  margin:0px;
+  
+  position:relative;
+}
+.info h1{
+  font-size:27px;
+  font-weight:700;
+  
+  margin:0px;
+  padding:0px;
+  
+  color:rgb(31,31,31);
+}
+.info h2{
+  font-size:17px;
+  font-weight:300;
+  
+  margin:0px;
+  padding:6px 0px 20px 0px;
+  
+  color:rgb(200,200,200);
+}
+.info h2 a{
+  color:rgb(120,120,120);
+  text-decoration:none;
+}
+
+.info img{
+  width:36px;
+  height:36px;
+  
+  position:absolute;
+  top:0px;
+  right:0px;
+  
+  margin:14px;
+}
+
+.stats{
+  border-top:1px solid rgb(230,230,230);
+  
+  padding:0px 1px 1px 1px
+}
+.stats .background{
+  padding:10px;
+  
+  background:rgb(250,250,250);
+}
+
+.stats item{
+  display:inline-block;
+  vertical-align:top;
+}
+.stats item img{
+  display:inline-block;
+  vertical-align:middle;
+  
+  width:17px;
+  height:17px;
+  
+  opacity:0.35;
+  
+  padding:3px;
+  margin-right:4px;
+}
+.stats item span{
+  display:inline-block;
+  vertical-align:middle;
+  
+  font-size:13px;
+  line-height:13px;
+  
+  opacity:0.5;
+  
+  margin-right:20px;
+}
+.stats logo{
+  float:right;
+  display:inline-block;
+  vertical-align:middle;
+  
+  font-size:14px;
+  padding:3px 6px;
+  
+  opacity:0.3;
+}
+
+</style>
+<head>
+<title>Embeded Fan Feed Video</title>
+  
+</head>
+<body>
+  
+<div class='frame'>
+  <div class='video'>
+    <video>
+      <source src="./video.ogg" type="video/ogg">
+      <source src="https://s3.amazonaws.com/fanfeed/videos/563fb449f048ca0433cf6f0a.mp4" type="video/mp4">
+      Your browser does not support HTML5 MP4 video.
+    </video>
+    <div class='refresh'>
+      <img src='./icons/refresh.png'/>
+    </div>
+  </div>
+  <div class='info'>
+    <img src='./icon.png'/>
+    <h1>Sergio Ramos goal of the season</h1>
+    <h2>Posted by <a href='#'>@connor</a></h2>
+  </div>
+  <div class='stats'>
+    <div class='background'>
+      <item>
+        <img src='./icons/curved.png'/>
+        <span>24</span>
+      </item>
+      <item>
+        <img src='./icons/up.png'/>
+        <span>68</span>
+      </item>
+      <item>
+        <img src='./icons/comments.png'/>
+        <span>432</span>
+      </item>
+      <logo>
+        <span>Fanfeed</span>
+      </logo>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  
+  var video;
+  var frame;
+  
+  var refresh;
+  var mustRefresh = false;
+  
+  window.addEventListener('load', Init);
+  function Init(){
+    frame = document.querySelector('.frame');
+    video = frame.querySelector('video');
+    refresh = frame.querySelector('.refresh');
+    
+    refresh.addEventListener('click', OnRefreshClicked);
+    
+    frame.addEventListener('mouseover', MouseOver);
+    frame.addEventListener('mouseout', MouseOut);
+    
+    video.addEventListener('ended', Ended);
+  }
+  
+  function MouseOver(){
+    if(mustRefresh) return;
+    video.play();
+  }
+  function MouseOut(){
+    if(mustRefresh) return;
+    video.pause();
+  }
+  
+  function OnRefreshClicked(){
+    if(!mustRefresh) return;
+    
+    mustRefresh = false;
+    frame.setAttribute('class', 'frame');
+    video.currentTime = 0;
+    video.play();
+  }
+  
+  function Ended(){
+    mustRefresh = true;
+    frame.setAttribute('class', 'frame refresh');
+  }
+  
+})();
+</script>
+</body>
+</html>

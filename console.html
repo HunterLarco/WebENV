@@ -59,6 +59,8 @@ playground{
 playground .table{
   display:table;
   width:100%;
+  
+  position:relative;
 }
 playground line{
   display:table-row;
@@ -430,6 +432,22 @@ catalog item:not(.noparam) cmd:after{
   color:rgb(180,180,180);
 }
 
+playground textarea{
+  resize:none;
+  border:none;
+  outline:none;
+  background:none;
+  -webkit-text-fill-color:transparent;
+  
+  position:absolute;
+  
+  font-size:16px;
+  line-height:23px;
+  font-family:inherit;
+  
+  padding:12px 0px 12px 8px;
+}
+
 </style>
 
 <title>Nybble</title>
@@ -551,6 +569,11 @@ catalog item:not(.noparam) cmd:after{
     <byte>10001</byte>
     <text>Jumps execution to the provided RAM address only if the ALU gt and eq flags are off</text>
   </item>
+  <item>
+    <cmd>SET</cmd>
+    <byte>10010</byte>
+    <text>Sets the accumulator to the provided parameter</text>
+  </item>
   <item class='noparam'>
     <cmd>END</cmd>
     <byte>11111</byte>
@@ -562,7 +585,52 @@ catalog item:not(.noparam) cmd:after{
 <article>
   <h1>How does a computer really work?</h1>
   <h2>assembly language</h2>
-  <p>Lets start with some basic (very basic) computer code</p>
+  <p>Everything starts with assembly. Imagine assembly as the most simple form of programming&mdash;it is the base of your computer.</p>
+  
+  <h2>Examples</h2>
+  <p>Below is a program that calculates exponentials.</p>
+  
+  <playground>
+    <line>SET 2</line>
+    <line>STORE 100</line>
+    <line>SET 5</line>
+    <line>STORE 101</line>
+    <line>SET 1</line>
+    <line>STORE 103</line>
+    <line>LOAD 102</line>
+    <line>CMP R101</line>
+    <line>JUMPEQ 15</line>
+    <line>ADD 1</line>
+    <line>STORE 102</line>
+    <line>LOAD 103</line>
+    <line>MUL R100</line>
+    <line>STORE 103</line>
+    <line>JUMP 6</line>
+    <line>LOAD 103</line>
+    <line>END</line>
+  </playground>
+  
+  <p>Below is a program that calculates factorial of a number.</p>
+  
+  <playground>
+    <line>SET 4</line>
+    <line>STORE 100</line>
+    <line>SET 1</line>
+    <line>STORE 101</line>
+    <line>LOAD 100</line>
+    <line>CMP 2</line>
+    <line>JUMPGT 13</line>
+    <line>MUL R101</line>
+    <line>STORE 101</line>
+    <line>LOAD 100</line>
+    <line>SUB 1</line>
+    <line>STORE 100</line>
+    <line>JUMP 4</line>
+    <line>LOAD 101</line>
+    <line>END</line>
+  </playground>
+  
+  <p>Assembly builds every computer you use today, every program you write is eventually converted into assembly before running.</p>
   
   <playground>
     <line>ADD 1</line>
@@ -573,7 +641,7 @@ catalog item:not(.noparam) cmd:after{
     <line>END</line>
   </playground>
   
-  <p>What does this do exactly? Lets look at the parts. It adds 1, the compares that value to 20. If it is equal to 20 it ends the program, if not it repeats.</p>
+  <p>To be continued...</p>
 </article>
 
 
@@ -582,14 +650,41 @@ catalog item:not(.noparam) cmd:after{
     <div class='vertlayout'>
       <div class='visual'>
       
-        <img src='./simulator/images/visual/assets/components.png'/>
-      
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid" width="1797.158" height="1117.753" viewBox="0 0 1797.158 1117.753">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid" width="1785.688" height="1117.753" viewBox="0 0 1785.688 1117.753">
           <defs>
             <style>
             .cls-1 {
               fill: #000;
+            }
+
+            .cls-1, .cls-5 {
               fill-rule: evenodd;
+            }
+
+            .cls-2, .cls-5 {
+              fill: #2c434e;
+            }
+
+            .cls-3, .cls-4 {
+              font-size: 44px;
+            }
+
+            .cls-4, .cls-7, .cls-9 {
+              fill: #fff;
+              text-anchor: middle;
+              font-family: "Helvetica-Light";
+            }
+
+            .cls-6, .cls-7 {
+              font-size: 65px;
+            }
+
+            .cls-8, .cls-9 {
+              font-size: 40px;
+            }
+
+            .cls-8 {
+              opacity: 0.8;
             }
             </style>
           </defs>
@@ -619,7 +714,7 @@ catalog item:not(.noparam) cmd:after{
             <g id='aluoutset'>
               <path d="M378.520,815.264 L378.520,811.575 L470.751,811.575 L470.751,815.264 L378.520,815.264 Z" class="cls-1"/>
               <path d="M472.226,813.788 L468.537,813.788 L468.537,636.715 L472.226,636.715 L472.226,813.788 Z" class="cls-1"/>
-              <path d="M470.751,638.191 L470.751,634.502 L618.320,634.502 L618.320,638.191 L470.751,638.191 Z" class="cls-1"/>
+              <path d="M470.751,638.191 L470.751,634.501 L618.320,634.501 L618.320,638.191 L470.751,638.191 Z" class="cls-1"/>
               <path d="M619.796,636.715 L616.106,636.715 L616.106,570.312 L619.796,570.312 L619.796,636.715 Z" class="cls-1"/>
               <path d="M618.320,571.788 L618.320,568.099 L663.329,568.099 L663.329,571.788 L618.320,571.788 Z" class="cls-1"/>
             </g>
@@ -641,13 +736,13 @@ catalog item:not(.noparam) cmd:after{
               <path d="M756.297,678.032 L752.608,678.032 L752.608,606.465 L756.297,606.465 L756.297,678.032 Z" class="cls-1"/>
             </g>
             <g id='increnable'>
-              <path d="M698.580,838.136 L694.891,838.136 L694.891,606.465 L698.580,606.465 L698.580,838.136 Z" class="cls-1"/>
+              <path d="M700.959,606.465 L704.648,606.465 L704.648,838.136 L700.959,838.136 L700.959,606.465 Z" class="cls-1"/>
             </g>
             <g id='incr128'>
               <path d="M729.735,944.380 L729.735,940.691 L796.141,940.691 L796.141,944.380 L729.735,944.380 Z" class="cls-1"/>
             </g>
             <g id='incr64'>
-              <path d="M796.141,929.623 L796.141,933.312 L729.735,933.312 L729.735,929.623 L796.141,929.623 Z" class="cls-1"/>
+              <path d="M796.141,929.624 L796.141,933.313 L729.735,933.313 L729.735,929.624 L796.141,929.624 Z" class="cls-1"/>
             </g>
             <g id='incr32'>
               <path d="M729.735,922.245 L729.735,918.556 L796.141,918.556 L796.141,922.245 L729.735,922.245 Z" class="cls-1"/>
@@ -655,10 +750,10 @@ catalog item:not(.noparam) cmd:after{
             <g id='incr16'>
               <path d="M796.141,907.489 L796.141,911.178 L729.735,911.178 L729.735,907.489 L796.141,907.489 Z" class="cls-1"/>
             </g>
-            <g id='incr8'>
+            <g id='incr4'>
               <path d="M729.735,889.044 L729.735,885.355 L796.141,885.355 L796.141,889.044 L729.735,889.044 Z" class="cls-1"/>
             </g>
-            <g id='incr4'>
+            <g id='incr8'>
               <path d="M796.141,896.422 L796.141,900.111 L729.735,900.111 L729.735,896.422 L796.141,896.422 Z" class="cls-1"/>
             </g>
             <g id='incr2'>
@@ -764,28 +859,28 @@ catalog item:not(.noparam) cmd:after{
               <path d="M328.346,230.184 L332.035,230.184 L332.035,305.441 L328.346,305.441 L328.346,230.184 Z" class="cls-1"/>
             </g>
             <g id='aluout1'>
-              <path d="M332.035,748.123 L335.724,748.123 L335.724,786.489 L332.035,786.489 L332.035,748.123 Z" class="cls-1"/>
+              <path d="M332.035,748.124 L335.724,748.124 L335.724,786.489 L332.035,786.489 L332.035,748.124 Z" class="cls-1"/>
             </g>
             <g id='aluout2'>
-              <path d="M324.657,786.489 L320.968,786.489 L320.968,748.123 L324.657,748.123 L324.657,786.489 Z" class="cls-1"/>
+              <path d="M324.657,786.489 L320.968,786.489 L320.968,748.124 L324.657,748.124 L324.657,786.489 Z" class="cls-1"/>
             </g>
             <g id='aluout4'>
-              <path d="M309.900,748.123 L313.589,748.123 L313.589,786.489 L309.900,786.489 L309.900,748.123 Z" class="cls-1"/>
+              <path d="M309.900,748.124 L313.589,748.124 L313.589,786.489 L309.900,786.489 L309.900,748.124 Z" class="cls-1"/>
             </g>
             <g id='aluout8'>
-              <path d="M302.521,786.489 L298.832,786.489 L298.832,748.123 L302.521,748.123 L302.521,786.489 Z" class="cls-1"/>
+              <path d="M302.521,786.489 L298.832,786.489 L298.832,748.124 L302.521,748.124 L302.521,786.489 Z" class="cls-1"/>
             </g>
             <g id='aluout16'>
-              <path d="M287.765,748.123 L291.454,748.123 L291.454,786.489 L287.765,786.489 L287.765,748.123 Z" class="cls-1"/>
+              <path d="M287.764,748.124 L291.454,748.124 L291.454,786.489 L287.764,786.489 L287.764,748.124 Z" class="cls-1"/>
             </g>
             <g id='aluout32'>
-              <path d="M280.386,786.489 L276.697,786.489 L276.697,748.123 L280.386,748.123 L280.386,786.489 Z" class="cls-1"/>
+              <path d="M280.386,786.489 L276.697,786.489 L276.697,748.124 L280.386,748.124 L280.386,786.489 Z" class="cls-1"/>
             </g>
             <g id='aluout64'>
-              <path d="M265.629,748.123 L269.318,748.123 L269.318,786.489 L265.629,786.489 L265.629,748.123 Z" class="cls-1"/>
+              <path d="M265.629,748.124 L269.318,748.124 L269.318,786.489 L265.629,786.489 L265.629,748.124 Z" class="cls-1"/>
             </g>
             <g id='aluout128'>
-              <path d="M258.251,786.489 L254.561,786.489 L254.561,748.123 L258.251,748.123 L258.251,786.489 Z" class="cls-1"/>
+              <path d="M258.251,786.489 L254.561,786.489 L254.561,748.124 L258.251,748.124 L258.251,786.489 Z" class="cls-1"/>
             </g>
             <g id='instruction1'>
               <path d="M1232.209,883.880 L1228.520,883.880 L1228.520,606.465 L1232.209,606.465 L1232.209,883.880 Z" class="cls-1"/>
@@ -794,7 +889,7 @@ catalog item:not(.noparam) cmd:after{
               <path d="M1217.452,606.465 L1221.141,606.465 L1221.141,883.880 L1217.452,883.880 L1217.452,606.465 Z" class="cls-1"/>
             </g>
             <g id='instruction4'>
-              <path d="M1210.073,883.880 L1206.384,883.880 L1206.384,606.465 L1210.073,606.465 L1210.073,883.880 Z" class="cls-1"/>
+              <path d="M1210.074,883.880 L1206.384,883.880 L1206.384,606.465 L1210.074,606.465 L1210.074,883.880 Z" class="cls-1"/>
             </g>
             <g id='instruction8'>
               <path d="M1195.317,606.465 L1199.006,606.465 L1199.006,883.880 L1195.317,883.880 L1195.317,606.465 Z" class="cls-1"/>
@@ -802,8 +897,11 @@ catalog item:not(.noparam) cmd:after{
             <g id='instruction16'>
               <path d="M1187.938,883.880 L1184.249,883.880 L1184.249,606.465 L1187.938,606.465 L1187.938,883.880 Z" class="cls-1"/>
             </g>
+            <g id='instruction32'>
+              <path d="M1176.938,883.880 L1173.249,883.880 L1173.249,606.465 L1176.938,606.465 L1176.938,883.880 Z" class="cls-1"/>
+            </g>
             <g id='ramadd1'>
-              <path d="M1763.459,264.861 L1767.148,264.861 L1767.148,305.441 L1763.459,305.441 L1763.459,264.861 Z" class="cls-1"/>
+              <path d="M1767.080,305.441 L1763.391,305.441 L1763.391,264.861 L1767.080,264.861 L1767.080,305.441 Z" class="cls-1"/>
             </g>
             <g id='ramadd2'>
               <path d="M1756.080,305.441 L1752.391,305.441 L1752.391,264.861 L1756.080,264.861 L1756.080,305.441 Z" class="cls-1"/>
@@ -839,7 +937,7 @@ catalog item:not(.noparam) cmd:after{
             <g id='instbus4'>
               <path d="M1656.471,1005.617 L1652.782,1005.617 L1652.782,942.904 L1656.471,942.904 L1656.471,1005.617 Z" class="cls-1"/>
               <path d="M1208.598,1007.093 L1208.598,1003.404 L1654.258,1003.404 L1654.258,1007.093 L1208.598,1007.093 Z" class="cls-1"/>
-              <path d="M1206.384,950.282 L1210.073,950.282 L1210.073,1005.617 L1206.384,1005.617 L1206.384,950.282 Z" class="cls-1"/>
+              <path d="M1206.384,950.282 L1210.074,950.282 L1210.074,1005.617 L1206.384,1005.617 L1206.384,950.282 Z" class="cls-1"/>
             </g>
             <g id='instbus8'>
               <path d="M1645.403,994.550 L1641.714,994.550 L1641.714,942.904 L1645.403,942.904 L1645.403,994.550 Z" class="cls-1"/>
@@ -850,6 +948,11 @@ catalog item:not(.noparam) cmd:after{
               <path d="M1634.336,983.483 L1630.646,983.483 L1630.646,942.904 L1634.336,942.904 L1634.336,983.483 Z" class="cls-1"/>
               <path d="M1186.462,984.959 L1186.462,981.270 L1632.122,981.270 L1632.122,984.959 L1186.462,984.959 Z" class="cls-1"/>
               <path d="M1184.249,950.282 L1187.938,950.282 L1187.938,983.483 L1184.249,983.483 L1184.249,950.282 Z" class="cls-1"/>
+            </g>
+            <g id='instbus32'>
+              <path d="M1174.438,950.312 L1178.438,950.312 L1178.438,972.313 L1174.438,972.313 L1174.438,950.312 Z" class="cls-1"/>
+              <path d="M1175.438,974.313 L1175.438,970.312 L1621.438,970.312 L1621.438,974.313 L1175.438,974.313 Z" class="cls-1"/>
+              <path d="M1623.438,972.312 L1619.438,972.312 L1619.438,943.313 L1623.438,943.313 L1623.438,972.312 Z" class="cls-1"/>
             </g>
             <g id='databus1'>
               <path d="M1763.459,942.904 L1767.148,942.904 L1767.148,1116.288 L1763.459,1116.288 L1763.459,942.904 Z" class="cls-1"/>
@@ -921,7 +1024,7 @@ catalog item:not(.noparam) cmd:after{
               <path d="M47.964,1072.020 L44.275,1072.020 L44.275,46.471 L47.964,46.471 L47.964,1072.020 Z" class="cls-1"/>
               <path d="M1720.664,1069.806 L1720.664,1073.495 L46.488,1073.495 L46.488,1069.806 L1720.664,1069.806 Z" class="cls-1"/>
               <path d="M1719.188,46.471 L1722.877,46.471 L1722.877,167.471 L1719.188,167.471 L1719.188,46.471 Z" class="cls-1"/>
-              <path d="M287.765,852.892 L291.454,852.892 L291.454,1072.020 L287.765,1072.020 L287.765,852.892 Z" class="cls-1"/>
+              <path d="M287.764,852.892 L291.454,852.892 L291.454,1072.020 L287.764,1072.020 L287.764,852.892 Z" class="cls-1"/>
               <path d="M217.669,163.782 L213.980,163.782 L213.980,46.471 L217.669,46.471 L217.669,163.782 Z" class="cls-1"/>
               <path d="M361.549,46.471 L365.238,46.471 L365.238,163.782 L361.549,163.782 L361.549,46.471 Z" class="cls-1"/>
               <path d="M946.662,745.172 L946.662,748.861 L796.141,748.861 L796.141,745.172 L946.662,745.172 Z" class="cls-1"/>
@@ -960,14 +1063,14 @@ catalog item:not(.noparam) cmd:after{
               <path d="M926.002,1049.886 L922.313,1049.886 L922.313,769.520 L926.002,769.520 L926.002,1049.886 Z" class="cls-1"/>
               <path d="M596.184,770.995 L596.184,767.306 L729.735,767.306 L729.735,770.995 L596.184,770.995 Z" class="cls-1"/>
               <path d="M597.660,1049.886 L593.971,1049.886 L593.971,769.520 L597.660,769.520 L597.660,1049.886 Z" class="cls-1"/>
-              <path d="M924.527,929.623 L924.527,933.312 L862.547,933.312 L862.547,929.623 L924.527,929.623 Z" class="cls-1"/>
-              <path d="M663.329,929.623 L663.329,933.312 L596.184,933.312 L596.184,929.623 L663.329,929.623 Z" class="cls-1"/>
+              <path d="M924.527,929.624 L924.527,933.313 L862.547,933.313 L862.547,929.624 L924.527,929.624 Z" class="cls-1"/>
+              <path d="M663.329,929.624 L663.329,933.313 L596.184,933.313 L596.184,929.624 L663.329,929.624 Z" class="cls-1"/>
             </g>
             <g id='databus128'>
               <path d="M1689.674,1038.819 L1685.985,1038.819 L1685.985,942.904 L1689.674,942.904 L1689.674,1038.819 Z" class="cls-1"/>
-              <path d="M79.692,81.148 L79.692,77.459 L1687.461,77.459 L1687.461,81.148 L79.692,81.148 Z" class="cls-1"/>
+              <path d="M79.692,81.148 L79.692,77.459 L1687.460,77.459 L1687.460,81.148 L79.692,81.148 Z" class="cls-1"/>
               <path d="M77.478,79.672 L81.167,79.672 L81.167,1038.819 L77.478,1038.819 L77.478,79.672 Z" class="cls-1"/>
-              <path d="M1687.461,1036.605 L1687.461,1040.294 L79.692,1040.294 L79.692,1036.605 L1687.461,1036.605 Z" class="cls-1"/>
+              <path d="M1687.460,1036.605 L1687.460,1040.294 L79.692,1040.294 L79.692,1036.605 L1687.460,1036.605 Z" class="cls-1"/>
               <path d="M1685.985,79.672 L1689.674,79.672 L1689.674,167.471 L1685.985,167.471 L1685.985,79.672 Z" class="cls-1"/>
               <path d="M258.251,1038.819 L254.561,1038.819 L254.561,852.892 L258.251,852.892 L258.251,1038.819 Z" class="cls-1"/>
               <path d="M184.466,163.782 L180.777,163.782 L180.777,79.672 L184.466,79.672 L184.466,163.782 Z" class="cls-1"/>
@@ -981,6 +1084,8 @@ catalog item:not(.noparam) cmd:after{
             </g>
           </g>
         </svg>
+       
+        <img src='./simulator/images/visual/assets/components.png'/>
       
       </div>
       <div class='code'></div>
@@ -998,6 +1103,7 @@ catalog item:not(.noparam) cmd:after{
 <script>
 (function(){
   
+  window.wConsole = console;
   
   var groupStack = [];
   console.group = function Group(header){
@@ -1062,12 +1168,14 @@ catalog item:not(.noparam) cmd:after{
     'instbus4'  ,
     'instbus8'  ,
     'instbus16' ,
+    'instbus32' ,
 
     'instruction1'  ,
     'instruction2'  ,
     'instruction4'  ,
     'instruction8'  ,
     'instruction16' ,
+    'instruction32' ,
 
     'ramadd1'   ,
     'ramadd2'   ,
@@ -1162,18 +1270,23 @@ catalog item:not(.noparam) cmd:after{
       wires[wire] = new WireImage(wire);
   }
   
+  var oldDivider;
+  
   function LoadDivider(){
     var divider = document.querySelector('simulator .graph .divider');
     divider.addEventListener('mousedown', DividerMouseDown);
   }
-  function DividerMouseDown(){
+  function DividerMouseDown(event){
+    oldDivider = event.screenX;
+    
     window.addEventListener('mousemove', DividerMouseMove);
     window.addEventListener('mouseup', DividerMouseUp);
   }
   function DividerMouseMove(event){
     var graph = document.querySelector('simulator .graph');
     
-    var dx = event.movementX;
+    var dx = event.screenX - oldDivider;
+    oldDivider = event.screenX;
     
     graph.style.width = (graph.offsetWidth - dx) + 'px';
   }
@@ -1218,6 +1331,9 @@ catalog item:not(.noparam) cmd:after{
     
     var buttons = {};
     
+    var editorValue = null;
+    var editor;
+    
     
     function CreateTable(){
       var table = document.createElement('div');
@@ -1226,11 +1342,20 @@ catalog item:not(.noparam) cmd:after{
       rendered.table = table;
     }
     function InterpretCode(){
-      rendered.lines = [];
+      while(rendered.lines.length > 0){
+        var line = rendered.lines[0];
+        line.parentElement.removeChild(line);
+        rendered.lines.shift();
+      }
+      
       for(var i=0; i<code.length; i++){
         var line = document.createElement('line');
         var lineText = code[i];
-        var byteCode = PaddedMachineCode(lineText)[0];
+        
+        var byteCode = 'N/A';
+        try{
+          byteCode = PaddedMachineCode(lineText)[0];
+        }catch(e){}
       
         var number = document.createElement('num');
         number.innerHTML = i+1;
@@ -1297,10 +1422,52 @@ catalog item:not(.noparam) cmd:after{
       frame.appendChild(rendered.info);
     }
     
+    function AddTextarea(){
+      editor = document.createElement('textarea');
+      ResizeEditor();
+      rendered.table.appendChild(editor);
+      
+      editor.addEventListener('keydown', EditorChange);
+    }
+    function ResizeEditor(){
+      var numWidth = rendered.lines[0].children[0].offsetWidth;
+      var textWidth = rendered.lines[0].children[1].offsetWidth
+      
+      editor.style.left = numWidth+'px';
+      editor.style.top = '0px';
+      editor.style.width = textWidth+'px';
+      editor.style.height = '100%';
+    }
+    function EditorChange(event){
+      ResetSimulator();
+      
+      setTimeout(function(){
+        editorValue = event.target.value;
+        ValidateChanges();
+      }, 0);
+    }
+    function HasChanges(){
+      return editorValue !== null;
+    }
+    function ValidateChanges(){
+      code = editorValue.split('\n');
+      InterpretCode();
+      ResizeEditor();
+      editorValue = null;
+      FormSimulator();
+    }
+    
+    function FormSimulator(){
+      simulator = new Simulator(code.join('\n'), wires);
+      simulator.addEventListener('clock', OnClock);
+    }
+    
+    
     function StepSimulator(){
       simulator.step();
     }
     function ResetSimulator(){
+      rendered.accumulator.innerHTML = '0';
       RemoveExecutionLine();
       StopSimulator();
       simulator.stop();
@@ -1378,11 +1545,13 @@ catalog item:not(.noparam) cmd:after{
       UpdateExecutionLine();
     }
     function RemoveExecutionLine(){
+      if(!rendered.lines[executionLine]) return;
       rendered.lines[executionLine].removeAttribute('class');
     }
     function UpdateExecutionLine(){
       RemoveExecutionLine();
       executionLine = simulator.getExecutionLine();
+      if(!rendered.lines[executionLine]) return;
       rendered.lines[executionLine].setAttribute('class', 'running');
     }
     function UpdateAccumulator(){
@@ -1424,14 +1593,16 @@ catalog item:not(.noparam) cmd:after{
       originalParent.appendChild(frame);
       
       code = GetCodeFromPlayground();
-      simulator = new Simulator(code.join('\n'), wires);
-      simulator.addEventListener('clock', OnClock);
       
       CreateTable();
       InterpretCode();
+      FormSimulator();
       FormMenu();
       FormAccumulatorReadout();
       RenderPlayground();
+      
+      AddTextarea();
+      editor.value = code.join('\n');
     }).apply(self, arguments);
   }
   

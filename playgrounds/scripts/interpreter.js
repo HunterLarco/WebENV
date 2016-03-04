@@ -33,9 +33,16 @@ function InterpretLine(line, cb){
   // if param needed check it is a number that is an integer
   // and fits in one unsigned byte
   var param = 0;
+  var registerParam = false;
   if(definition.param){
-    if(!IsNumeric(params[0]))
-      return cb('Parameter must be numeric');
+    if(!IsNumeric(params[0])){
+      if(params[0][0] === 'R' && IsNumeric(params[0].slice(1))){
+        registerParam = true;
+        params[0] = params[0].slice(1);
+      }else{
+        return cb('Parameter must be numeric');
+      }
+    }
     if(parseFloat(params[0]) !== parseInt(params[0]))
       return cb('Parameter must be an integer');
     param = parseInt(params[0]);
@@ -44,7 +51,7 @@ function InterpretLine(line, cb){
   }
   
   // convert command into bytecode
-  var machineCode = (definition.code << 8) + param;
+  var machineCode = ((registerParam ? 1 : 0) << 13) + (definition.code << 8) + param;
   return cb(null, machineCode);
 }
 function IsNumeric(n){
@@ -66,7 +73,7 @@ function GetMachineCode(code){
 function PaddedMachineCode(code){
   return GetMachineCode(code).map(function(bytecode){
     var str = bytecode.toString(2);
-    var padded = '0000000000000'.slice(str.length) + str;
-    return padded.slice(0,5) + '&nbsp;' + padded.slice(5);
+    var padded = '00000000000000'.slice(str.length) + str;
+    return padded.slice(0,6) + '&nbsp;' + padded.slice(6);
   });
 }

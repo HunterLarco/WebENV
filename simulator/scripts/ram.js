@@ -14,10 +14,16 @@ function RAM(){
   self.ENABLE = pins.init('ENABLE', Update);
   
   self.repr = Repr;
+  self.reset = Reset;
   
   
   function Repr(){
     return 'RAM(in: '+inputGroup.read()+'; out: '+outputGroup.read()+'; enabled: '+pins.read('ENABLE')+')';
+  }
+  function Reset(instructions){
+    mem = {};
+    for(var i=0; i<instructions.length; i++)
+      mem[i] = instructions[i];
   }
   
   

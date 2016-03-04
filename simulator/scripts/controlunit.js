@@ -4,8 +4,7 @@ function ControlUnit(){
   
   
   self.reset = function Reset(){
-    executionStack = [];
-    JumpToNextInstruction();
+    executionStack = [].concat(microPrograms.ExecuteInstruction);
     pins.writeAll(0);
   }
   
@@ -20,73 +19,6 @@ function ControlUnit(){
   var instruction;
   var alucontrol;
   
-  var catalog = {
-    Load: [
-      DoLoad,
-      SetMemAddressToTemp,
-      SetAccumulatorToMemAddress,
-      CloseSetAccumulatorToMemAddress
-    ],
-    Store: [
-      DoStore,
-      SetMemAddressToTemp,
-      LoadAccumulatorIntoRam,
-      CloseStorage
-    ],
-    Add: [
-      SetAddOperator
-    ],
-    Sub: [
-      SetSubOperator
-    ],
-    Mul: [
-      SetMulOperator
-    ],
-    Div: [
-      SetDivOperator
-    ],
-    Mod: [
-      SetModOperator
-    ],
-    CMP: [
-      SetCMPOperator
-    ],
-    LShift: [
-      SetLShiftOperator
-    ],
-    RShift: [
-      SetRShiftOperator
-    ],
-    And: [
-      SetAndOperator
-    ],
-    Or: [
-      SetOrOperator
-    ],
-    Not: [
-      SetNotOperator
-    ],
-    Xor: [
-      SetXorOperator
-    ],
-    Jump: [
-      SetInstructionPointerToTemp,
-      DoCloseTempStorage,
-      JumpToNextInstruction
-    ],
-    JumpGT: [
-      DoJumpGT
-    ],
-    JumpEQ: [
-      DoJumpEQ
-    ],
-    JumpLT: [
-      DoJumpLT
-    ],
-    End: [
-      DoEndExecution
-    ]
-  };
   var microPrograms = {
     IncrementInstructionPointer: [
       SetTempInstructionPointer,
@@ -103,13 +35,131 @@ function ControlUnit(){
       MoveALURegisterToAccumulator,
       CloseAccumulatorALUSet
     ],
+    LoadParameter: [
+      DoLoadParameter,
+      SetMemAddressToTemp,
+      SetTempToMemAddress,
+      CloseSetTempToMemAddress
+    ],
     ExecuteInstruction: [
-      InterpretInstruction
+      LoadInstruction
+    ]
+  };
+  var catalog = {
+    Load: [
+      DoLoad,
+      SetMemAddressToTemp,
+      SetAccumulatorToMemAddress,
+      CloseSetAccumulatorToMemAddress,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Store: [
+      DoStore,
+      SetMemAddressToTemp,
+      LoadAccumulatorIntoRam,
+      CloseStorage,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Add: [
+      SetAddOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Sub: [
+      SetSubOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Mul: [
+      SetMulOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Div: [
+      SetDivOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Mod: [
+      SetModOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    CMP: [
+      SetCMPOperator,
+      EndCMPOperator,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    LShift: [
+      SetLShiftOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    RShift: [
+      SetRShiftOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    And: [
+      SetAndOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Or: [
+      SetOrOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Not: [
+      SetNotOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Xor: [
+      SetXorOperator,
+      ConcatExecuteALU,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    Jump: [
+      SetInstructionPointerToTemp,
+      DoCloseTempStorage,
+      ConcatExecuteInstruction
+    ],
+    JumpGT: [
+      DoJumpGT
+    ],
+    JumpEQ: [
+      DoJumpEQ
+    ],
+    JumpLT: [
+      DoJumpLT
+    ],
+    Set: [
+      SetAccToTemp,
+      CloseDoSet,
+      ConcatIncrementInstructionPointer,
+      ConcatExecuteInstruction
+    ],
+    End: [
+      DoEndExecution
     ]
   };
   
-  var executionStack = [];
-  JumpToNextInstruction();
+  var executionStack = [].concat(microPrograms.ExecuteInstruction);
   
   function SetupPins(){
     self.CLOCK = pins.init('CLOCK', OnClock);
@@ -171,23 +221,18 @@ function ControlUnit(){
     self.INST2 = pins.init('INST2', Update);
     self.INST3 = pins.init('INST3', Update);
     self.INST4 = pins.init('INST4', Update);
+    self.INST5 = pins.init('INST5', Update);
     self.INST  = new PinConnector([
       self.INST0,
       self.INST1,
       self.INST2,
       self.INST3,
-      self.INST4
-    ]);
-    instruction = new BinaryPinGroup(pins, [
-      'INST0',
-      'INST1',
-      'INST2',
-      'INST3',
-      'INST4'
+      self.INST4,
+      self.INST5
     ]);
     
     alucontrol = new BinaryPinGroup(pins, ['ALUCTL0', 'ALUCTL1', 'ALUCTL2', 'ALUCTL3']);
-    instruction = new BinaryPinGroup(pins, ['INST0', 'INST1', 'INST2', 'INST3', 'INST4']);
+    instruction = new BinaryPinGroup(pins, ['INST0', 'INST1', 'INST2', 'INST3', 'INST4', 'INST5']);
   }
   
   
@@ -198,17 +243,39 @@ function ControlUnit(){
     if (currentBlock !== undefined)
       currentBlock();
   }
-  function IncrementToNextInstruction(){
-    executionStack = executionStack.concat(microPrograms.IncrementInstructionPointer).concat(microPrograms.LoadInstruction).concat(microPrograms.ExecuteInstruction);
-  }
-  function JumpToNextInstruction(){
-    executionStack = executionStack.concat(microPrograms.LoadInstruction).concat(microPrograms.ExecuteInstruction);
-  }
-  function ExecuteALUOperation(){
+  
+  function ConcatExecuteALU(){
     executionStack = executionStack.concat(microPrograms.ExecuteALU);
     OnClock();
   }
+  function ConcatIncrementInstructionPointer(){
+    executionStack = executionStack.concat(microPrograms.IncrementInstructionPointer);
+    OnClock();
+  }
+  function ConcatExecuteInstruction(){
+    executionStack = executionStack.concat(microPrograms.ExecuteInstruction);
+    OnClock();
+  }
   
+  
+  function SetAccToTemp(){
+    console.group('cmd: SET');
+    console.info('Moveing temp register to accumulator register');
+    
+    // feed temp through (data from current instruction)
+    alucontrol.write(13);
+    pins.write('ALUTEMPENABLE', 1);
+    pins.write('ALUTEMPSET', 1);
+    pins.write('SETACC', 1);
+  }
+  function CloseDoSet(){
+    console.info('Closing ALU temp to acc connection');
+    console.groupEnd();
+    
+    pins.write('SETACC', 0);
+    pins.write('ALUTEMPSET', 0);
+    pins.write('ALUTEMPENABLE', 0);
+  }
   
   
   // Micro Program to Increment Instruction Pointer
@@ -286,28 +353,45 @@ function ControlUnit(){
   }
   
   // Micro Program to interpret the current instruction
+  function LoadInstruction(){
+    executionStack = executionStack.concat(microPrograms.LoadInstruction);
+    executionStack.push(CheckRAMParameter);
+    OnClock();
+  }
+  function CheckRAMParameter(){
+    var instructionCode = instruction.read();
+    var ramFlag = (instructionCode & 0b100000) / 32;
+    
+    if(ramFlag) executionStack = executionStack.concat(microPrograms.LoadParameter);
+    executionStack.push(InterpretInstruction);
+    OnClock();
+  }
   function InterpretInstruction(){
     var action;
     
-    switch(instruction.read()){
-      case 0:  action = catalog.Load; break;
-      case 1:  action = catalog.Store; break;
-      case 2:  action = catalog.Add; break;
-      case 3:  action = catalog.Sub; break;
-      case 4:  action = catalog.Mul; break;
-      case 5:  action = catalog.Div; break;
-      case 6:  action = catalog.Mod; break;
-      case 7:  action = catalog.CMP; break;
-      case 8:  action = catalog.LShift; break;
-      case 9:  action = catalog.RShift; break;
-      case 10: action = catalog.And; break;
-      case 11: action = catalog.Or; break;
-      case 12: action = catalog.Not; break;
-      case 13: action = catalog.Xor; break;
-      case 14: action = catalog.Jump; break;
-      case 15: action = catalog.JumpGT; break;
-      case 16: action = catalog.JumpEQ; break;
-      case 17: action = catalog.JumpLT; break;
+    var instructionCode = instruction.read();
+    var rawCode = instructionCode & 0b011111;
+    
+    switch(rawCode){
+      case 1:  action = catalog.Load; break;
+      case 2:  action = catalog.Store; break;
+      case 3:  action = catalog.Add; break;
+      case 4:  action = catalog.Sub; break;
+      case 5:  action = catalog.Mul; break;
+      case 6:  action = catalog.Div; break;
+      case 7:  action = catalog.Mod; break;
+      case 8:  action = catalog.CMP; break;
+      case 9:  action = catalog.LShift; break;
+      case 10: action = catalog.RShift; break;
+      case 11: action = catalog.And; break;
+      case 12: action = catalog.Or; break;
+      case 13: action = catalog.Not; break;
+      case 14: action = catalog.Xor; break;
+      case 15: action = catalog.Jump; break;
+      case 16: action = catalog.JumpGT; break;
+      case 17: action = catalog.JumpEQ; break;
+      case 18: action = catalog.JumpLT; break;
+      case 19: action = catalog.Set; break;
       case 31: action = catalog.End; break;
       default: action = [];
     }
@@ -345,9 +429,28 @@ function ControlUnit(){
 
     pins.write('SETACC', 0);
     pins.write('ENABLERAM', 0);
+  }
+  
+  // Micro Program LOADPARAMETER
+  function DoLoadParameter(){
+    console.group('Loading parameter from RAM');
+    OnClock();
+  }
+  function SetTempToMemAddress(){
+    console.info('Set temp register to memory at the memory address register');
     
+    pins.write('SETMEM', 0);
+    pins.write('ALUTEMPSET', 0);
+    pins.write('ALUTEMPENABLE', 0);
+    pins.write('ENABLERAM', 1);
+    pins.write('SETTMP', 1);
+  }
+  function CloseSetTempToMemAddress(){
+    console.info('Close data feed from RAM');
+    console.groupEnd();
     
-    IncrementToNextInstruction();
+    pins.write('SETTMP', 0);
+    pins.write('ENABLERAM', 0);
   }
   
   // STORE command
@@ -372,8 +475,6 @@ function ControlUnit(){
     pins.write('SETRAM', 0);
     pins.write('ALUTEMPSET', 0);
     pins.write('ALUTEMPENABLE', 0);
-    
-    IncrementToNextInstruction();
   }
   
   // ADD command
@@ -383,9 +484,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(0);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // SUB command
@@ -395,9 +493,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(1);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // MUL command
@@ -407,9 +502,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(2);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // DIV command
@@ -419,9 +511,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(3);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // MOD command
@@ -431,22 +520,21 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(4);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // CMP command
   function SetCMPOperator(){
     console.group('cmd: CMP');
     console.info('Update ALU flags using new ALU input without changing the accumulator');
-    console.groupEnd();
     
     alucontrol.write(5);
     pins.write('SETFLAGS', 1);
+  }
+  function EndCMPOperator(){
+    console.info('Close setting ALU flags');
+    console.groupEnd();
+    
     pins.write('SETFLAGS', 0);
-
-    IncrementToNextInstruction();
   }
   
   // LShift command
@@ -456,9 +544,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(6);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // RShift command
@@ -468,9 +553,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(7);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // AND command
@@ -480,9 +562,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(8);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // OR command
@@ -492,9 +571,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(9);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // NOT command
@@ -504,9 +580,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(10);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // XOR command
@@ -516,9 +589,6 @@ function ControlUnit(){
     console.groupEnd();
     
     alucontrol.write(11);
-    
-    ExecuteALUOperation();
-    IncrementToNextInstruction();
   }
   
   // Jump Command
@@ -551,7 +621,8 @@ function ControlUnit(){
       executionStack = executionStack.concat(catalog.Jump);
       OnClock();
     }else{
-      IncrementToNextInstruction();
+      ConcatIncrementInstructionPointer();
+      ConcatExecuteInstruction();
     }
   }
   
@@ -565,7 +636,8 @@ function ControlUnit(){
       executionStack = executionStack.concat(catalog.Jump);
       OnClock();
     }else{
-      IncrementToNextInstruction();
+      ConcatIncrementInstructionPointer();
+      ConcatExecuteInstruction();
     }
   }
   
@@ -579,7 +651,8 @@ function ControlUnit(){
       executionStack = executionStack.concat(catalog.Jump);
       OnClock();
     }else{
-      IncrementToNextInstruction();
+      ConcatIncrementInstructionPointer();
+      ConcatExecuteInstruction();
     }
   }
   

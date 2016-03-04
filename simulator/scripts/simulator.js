@@ -81,6 +81,7 @@ function Simulator(){
     ALU.reset();
     Instruction.reset();
     MemoryAddress.reset();
+    ram.reset(instructions);
   }
   
   function REPR(){
@@ -127,7 +128,7 @@ function Simulator(){
     
     // Bus
     dataBus = CreateBus(8);
-    instructionBus = CreateBus(5);
+    instructionBus = CreateBus(6);
     
     // Instruction Pointer setup (with incrementor and register)
     InstructionPointer = new Register(8);
@@ -151,10 +152,10 @@ function Simulator(){
     TempInstructionPointer.ENABLE(alwaysOn);
     
     // RAM and Memory Address register
-    ram = new RAM(13, instructions);
+    ram = new RAM(14, instructions);
     MemoryAddress = new Register(8);
     
-    ram.INPUT.connect(MemoryAddress.OUTPUT, CreateBus(5));
+    ram.INPUT.connect(MemoryAddress.OUTPUT, CreateBus(6));
     ram.OUTPUT.connect(dataBus, instructionBus);
     
     MemoryAddress.INPUT.connect(dataBus);
@@ -166,7 +167,7 @@ function Simulator(){
     control.ENABLERAM(ram.ENABLE);
     
     // Instruction register
-    Instruction = new Register(5);
+    Instruction = new Register(6);
     
     Instruction.INPUT.connect(instructionBus);
     Instruction.OUTPUT.connect(control.INST);
@@ -233,6 +234,7 @@ function Simulator(){
     pins[2].listen(SetGuiImageClosure(gui.instbus4  , pins[2]));
     pins[3].listen(SetGuiImageClosure(gui.instbus8  , pins[3]));
     pins[4].listen(SetGuiImageClosure(gui.instbus16 , pins[4]));
+    pins[5].listen(SetGuiImageClosure(gui.instbus32 , pins[5]));
     
     ConnectGuiToPinGroup(MemoryAddress.OUTPUT, [
       'ramadd1'  ,
@@ -250,7 +252,8 @@ function Simulator(){
       'instruction2'  ,
       'instruction4'  ,
       'instruction8'  ,
-      'instruction16' 
+      'instruction16' ,
+      'instruction32' 
     ]);
     
     ConnectGuiToPinGroup(ALU.OUTPUT, [
