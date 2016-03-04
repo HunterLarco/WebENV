@@ -569,6 +569,11 @@ playground textarea{
     <byte>10001</byte>
     <text>Jumps execution to the provided RAM address only if the ALU gt and eq flags are off</text>
   </item>
+  <item>
+    <cmd>SET</cmd>
+    <byte>10010</byte>
+    <text>Sets the accumulator to the provided parameter</text>
+  </item>
   <item class='noparam'>
     <cmd>END</cmd>
     <byte>11111</byte>
@@ -580,12 +585,15 @@ playground textarea{
 <article>
   <h1>How does a computer really work?</h1>
   <h2>assembly language</h2>
-  <p>Lets start with some basic (very basic) computer code</p>
+  <p>Everything starts with assembly. Imagine assembly as the most simple form of programming&mdash;it is the base of your computer.</p>
+  
+  <h2>Examples</h2>
+  <p>Below is a program that calculates exponentials.</p>
   
   <playground>
-    <line>SET 4</line>
-    <line>STORE 100</line>
     <line>SET 2</line>
+    <line>STORE 100</line>
+    <line>SET 5</line>
     <line>STORE 101</line>
     <line>SET 1</line>
     <line>STORE 103</line>
@@ -602,7 +610,38 @@ playground textarea{
     <line>END</line>
   </playground>
   
-  <p>What does this do exactly? Lets look at the parts. It adds 1, the compares that value to 20. If it is equal to 20 it ends the program, if not it repeats.</p>
+  <p>Below is a program that calculates factorial of a number.</p>
+  
+  <playground>
+    <line>SET 4</line>
+    <line>STORE 100</line>
+    <line>SET 1</line>
+    <line>STORE 101</line>
+    <line>LOAD 100</line>
+    <line>CMP 2</line>
+    <line>JUMPGT 13</line>
+    <line>MUL R101</line>
+    <line>STORE 101</line>
+    <line>LOAD 100</line>
+    <line>SUB 1</line>
+    <line>STORE 100</line>
+    <line>JUMP 4</line>
+    <line>LOAD 101</line>
+    <line>END</line>
+  </playground>
+  
+  <p>Assembly builds every computer you use today, every program you write is eventually converted into assembly before running.</p>
+  
+  <playground>
+    <line>ADD 1</line>
+    <line>MUL 2</line>
+    <line>CMP 32</line>
+    <line>JUMPEQ 5</line>
+    <line>JUMP 1</line>
+    <line>END</line>
+  </playground>
+  
+  <p>To be continued...</p>
 </article>
 
 
@@ -1231,18 +1270,23 @@ playground textarea{
       wires[wire] = new WireImage(wire);
   }
   
+  var oldDivider;
+  
   function LoadDivider(){
     var divider = document.querySelector('simulator .graph .divider');
     divider.addEventListener('mousedown', DividerMouseDown);
   }
-  function DividerMouseDown(){
+  function DividerMouseDown(event){
+    oldDivider = event.screenX;
+    
     window.addEventListener('mousemove', DividerMouseMove);
     window.addEventListener('mouseup', DividerMouseUp);
   }
   function DividerMouseMove(event){
     var graph = document.querySelector('simulator .graph');
     
-    var dx = event.movementX;
+    var dx = event.screenX - oldDivider;
+    oldDivider = event.screenX;
     
     graph.style.width = (graph.offsetWidth - dx) + 'px';
   }
